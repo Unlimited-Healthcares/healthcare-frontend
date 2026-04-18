@@ -1,0 +1,302 @@
+import { MedicalRecord, MedicalRecordCategory, MedicalRecordFile } from '@/types/health-records';
+
+export const demoCategories: MedicalRecordCategory[] = [
+  {
+    id: '1',
+    name: 'Diagnostic Results',
+    description: 'Blood tests, urine tests, and other diagnostic work',
+    color: 'bg-blue-500',
+    icon: '🧪',
+    isActive: true,
+    recordCount: 15,
+    children: [
+      {
+        id: '1-1',
+        name: 'Blood Tests',
+        parentCategoryId: '1',
+        color: 'bg-blue-400',
+        icon: '🩸',
+        isActive: true,
+        recordCount: 8,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z'
+      },
+      {
+        id: '1-2',
+        name: 'Urine Tests',
+        parentCategoryId: '1',
+        color: 'bg-blue-400',
+        icon: '🧪',
+        isActive: true,
+        recordCount: 4,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z'
+      }
+    ],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '2',
+    name: 'Radiology',
+    description: 'X-rays, MRI, CT scans, and other radiology studies',
+    color: 'bg-purple-500',
+    icon: '📷',
+    isActive: true,
+    recordCount: 12,
+    children: [
+      {
+        id: '2-1',
+        name: 'X-Rays',
+        parentCategoryId: '2',
+        color: 'bg-purple-400',
+        icon: '🦴',
+        isActive: true,
+        recordCount: 6,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z'
+      },
+      {
+        id: '2-2',
+        name: 'MRI Scans',
+        parentCategoryId: '2',
+        color: 'bg-purple-400',
+        icon: '🧠',
+        isActive: true,
+        recordCount: 3,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z'
+      }
+    ],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '3',
+    name: 'Prescriptions',
+    description: 'Medication prescriptions and pharmacy records',
+    color: 'bg-green-500',
+    icon: '💊',
+    isActive: true,
+    recordCount: 8,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '4',
+    name: 'Consultations',
+    description: 'Doctor visits and consultation notes',
+    color: 'bg-orange-500',
+    icon: '👨‍⚕️',
+    isActive: true,
+    recordCount: 20,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '5',
+    name: 'Procedures',
+    description: 'Surgical procedures and medical interventions',
+    color: 'bg-red-500',
+    icon: '🏥',
+    isActive: true,
+    recordCount: 5,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '6',
+    name: 'Vaccinations',
+    description: 'Immunization records and vaccine history',
+    color: 'bg-teal-500',
+    icon: '💉',
+    isActive: true,
+    recordCount: 7,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  }
+];
+
+export const demoFiles: MedicalRecordFile[] = [
+  {
+    id: 'file-1',
+    recordId: 'record-1',
+    fileName: 'blood_test_results_2024.pdf',
+    originalFileName: 'Complete Blood Count - Dec 2024.pdf',
+    filePath: '/uploads/medical-records/file-1.pdf',
+    fileType: 'pdf',
+    fileSize: 245760,
+    mimeType: 'application/pdf',
+    isEncrypted: true,
+    uploadStatus: 'completed',
+    createdAt: '2024-12-15T10:30:00Z',
+    updatedAt: '2024-12-15T10:30:00Z',
+    url: '/demo/files/blood_test_results_2024.pdf',
+    thumbnailUrl: '/demo/thumbnails/blood_test_thumb.jpg',
+    isDicom: false,
+    uploadedBy: 'user-1',
+    uploadedAt: '2024-12-15T10:30:00Z',
+    tags: ['blood-work', 'routine'],
+    description: 'Complete blood count results showing normal values'
+  },
+  {
+    id: 'file-2',
+    recordId: 'record-2',
+    fileName: 'chest_xray_20241214.dcm',
+    originalFileName: 'Chest X-Ray - Frontal View.dcm',
+    filePath: '/uploads/medical-records/file-2.dcm',
+    fileType: 'dcm',
+    fileSize: 1048576,
+    mimeType: 'application/dicom',
+    isEncrypted: true,
+    uploadStatus: 'completed',
+    createdAt: '2024-12-14T14:20:00Z',
+    updatedAt: '2024-12-14T14:20:00Z',
+    url: '/demo/files/chest_xray_20241214.dcm',
+    thumbnailUrl: '/demo/thumbnails/xray_thumb.jpg',
+    isDicom: true,
+    dicomMetadata: {
+      patientName: 'John Doe',
+      studyDate: '2024-12-14',
+      modality: 'CR',
+      bodyPart: 'CHEST',
+      studyDescription: 'Chest X-Ray',
+      seriesDescription: 'Frontal View',
+      instanceNumber: 1,
+      pixelSpacing: [0.143, 0.143]
+    },
+    uploadedBy: 'user-2',
+    uploadedAt: '2024-12-14T14:20:00Z',
+    tags: ['imaging', 'chest', 'routine'],
+    description: 'Routine chest X-ray showing clear lungs'
+  }
+];
+
+export const demoRecords: MedicalRecord[] = [
+  {
+    id: 'record-1',
+    title: 'Complete Blood Count - December 2024',
+    description: 'Routine blood work showing all values within normal range',
+    patientId: 'patient-1',
+    patientName: 'John Doe',
+    providerId: 'provider-1',
+    providerName: 'Dr. Sarah Johnson',
+    categoryId: '1-1',
+    categoryDetails: demoCategories[0].children![0],
+    tags: ['routine', 'blood-work', 'normal'],
+    recordType: 'diagnostic_result',
+    status: 'active',
+    priority: 'normal',
+    confidentialityLevel: 'restricted',
+    recordDate: '2024-12-15T00:00:00Z',
+    createdAt: '2024-12-15T10:30:00Z',
+    updatedAt: '2024-12-15T10:30:00Z',
+    version: 1,
+    isSensitive: false,
+    isShareable: true,
+    isLatestVersion: true,
+    files: [demoFiles[0]],
+    sharedWith: [],
+    accessLog: [
+      {
+        id: 'log-1',
+        recordId: 'record-1',
+        userId: 'user-1',
+        userName: 'John Doe',
+        action: 'view',
+        ipAddress: '192.168.1.100',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        timestamp: '2024-12-15T11:00:00Z'
+      }
+    ]
+  },
+  {
+    id: 'record-2',
+    title: 'Chest X-Ray - Routine Screening',
+    description: 'Annual chest X-ray screening showing clear lungs and normal heart size',
+    patientId: 'patient-1',
+    patientName: 'John Doe',
+    providerId: 'provider-2',
+    providerName: 'Dr. Michael Chen',
+    categoryId: '2-1',
+    categoryDetails: demoCategories[1].children![0],
+    tags: ['imaging', 'chest', 'screening', 'normal'],
+    recordType: 'imaging',
+    status: 'active',
+    priority: 'normal',
+    confidentialityLevel: 'restricted',
+    recordDate: '2024-12-14T00:00:00Z',
+    createdAt: '2024-12-14T14:20:00Z',
+    updatedAt: '2024-12-14T14:20:00Z',
+    version: 1,
+    isSensitive: false,
+    isShareable: true,
+    isLatestVersion: true,
+    files: [demoFiles[1]],
+    sharedWith: ['provider-3'],
+    accessLog: [
+      {
+        id: 'log-2',
+        recordId: 'record-2',
+        userId: 'user-1',
+        userName: 'John Doe',
+        action: 'view',
+        ipAddress: '192.168.1.100',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        timestamp: '2024-12-14T15:00:00Z'
+      }
+    ]
+  },
+  {
+    id: 'record-3',
+    title: 'Lisinopril 10mg - Hypertension Management',
+    description: 'ACE inhibitor prescribed for blood pressure control',
+    patientId: 'patient-1',
+    patientName: 'John Doe',
+    providerId: 'provider-1',
+    providerName: 'Dr. Sarah Johnson',
+    categoryId: '3',
+    categoryDetails: demoCategories[2],
+    tags: ['medication', 'hypertension', 'ace-inhibitor'],
+    recordType: 'prescription',
+    status: 'active',
+    priority: 'normal',
+    confidentialityLevel: 'restricted',
+    recordDate: '2024-12-10T00:00:00Z',
+    createdAt: '2024-12-10T09:15:00Z',
+    updatedAt: '2024-12-10T09:15:00Z',
+    version: 1,
+    isSensitive: false,
+    isShareable: true,
+    isLatestVersion: true,
+    files: [],
+    sharedWith: [],
+    accessLog: []
+  },
+  {
+    id: 'record-4',
+    title: 'Annual Physical Examination',
+    description: 'Comprehensive annual physical exam with preventive care screening',
+    patientId: 'patient-1',
+    patientName: 'John Doe',
+    providerId: 'provider-1',
+    providerName: 'Dr. Sarah Johnson',
+    categoryId: '4',
+    categoryDetails: demoCategories[3],
+    tags: ['physical-exam', 'preventive-care', 'annual'],
+    recordType: 'consultation',
+    status: 'active',
+    priority: 'normal',
+    confidentialityLevel: 'restricted',
+    recordDate: '2024-12-01T00:00:00Z',
+    createdAt: '2024-12-01T16:30:00Z',
+    updatedAt: '2024-12-01T16:30:00Z',
+    version: 1,
+    isSensitive: false,
+    isShareable: true,
+    isLatestVersion: true,
+    files: [],
+    sharedWith: [],
+    accessLog: []
+  }
+];

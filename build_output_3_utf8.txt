@@ -1,0 +1,8 @@
+﻿
+> healthcare-frontend@1.0.0 build
+> tsc && vite build
+
+src/components/auth/ProfileCompletion.tsx(183,9): error TS2353: Object literal may only specify known properties, and 'licenseNumber' does not exist in type 'ProfileApiRequest'.
+src/components/requests/RequestCard.tsx(153,30): error TS2339: Property 'updateRequestStatus' does not exist on type 'DiscoveryService'.
+src/components/requests/RequestModal.tsx(873,20): error TS2532: Object is possibly 'undefined'.
+

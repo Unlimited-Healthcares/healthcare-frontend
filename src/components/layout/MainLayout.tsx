@@ -1,0 +1,97 @@
+
+import React, { useState, useEffect } from "react";
+import { Sidebar } from "./Sidebar";
+import { Navbar } from "./Navbar";
+import { BottomTabs } from "./BottomTabs";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { UserIdDisplay } from "@/components/dashboard/UserIdDisplay";
+
+interface MainLayoutProps {
+  children: React.ReactNode;
+}
+
+export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+  const { user, profile } = useAuth();
+
+  // Initialize mobile state immediately to prevent layout flicker
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768; // md breakpoint
+    }
+    return false;
+  });
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768; // md breakpoint
+    }
+    return false;
+  });
+
+  // Detect mobile devices and manage sidebar state
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768; // md breakpoint
+      setIsMobile(mobile);
+      setSidebarCollapsed(mobile);
+    };
+
+    // Check on mount
+    checkMobile();
+
+    // Listen for resize events
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex w-full overflow-x-hidden overscroll-contain">
+      {/* Sidebar - hidden on mobile, visible on desktop */}
+      {!isMobile && (
+        <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
+      )}
+
+      {/* Mobile sidebar overlay */}
+      {isMobile && !sidebarCollapsed && (
+        <div
+          className="fixed inset-0 z-[1000] sidebar-overlay bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+          onClick={handleToggleSidebar}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      {isMobile && !sidebarCollapsed && (
+        <div
+          className="fixed left-0 top-0 z-[1010] sidebar-content h-full w-[280px] max-w-[85vw] bg-card shadow-xl transform transition-transform duration-300 ease-out overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Sidebar collapsed={false} onToggleCollapse={handleToggleSidebar} />
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <Navbar onToggleSidebar={handleToggleSidebar} isMobile={isMobile} />
+
+        <main className="flex-1 p-3 sm:p-6 md:p-8 bg-gray-50 w-full overflow-y-auto overflow-x-hidden pb-36 md:pb-10 safe-area-pb scrolling-touch">
+          <div className="healthcare-container max-w-full">
+            {profile?.display_id && (
+              <UserIdDisplay id={profile.display_id} label="Your Medical ID" />
+            )}
+            {children}
+          </div>
+        </main>
+      </div>
+
+      {/* Bottom Tabs - Only visible on mobile */}
+      {isMobile && <BottomTabs />}
+    </div>
+  );
+};
