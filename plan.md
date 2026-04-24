@@ -2,17 +2,24 @@
 
 This plan guides you to rebuild the app end-to-end, matching the current feature set, architecture, and behavior. It covers project scaffolding, dependencies, configs, backend API integration, routing, core/advanced features, QA, and deployment.
 
+### Migration Status
+- [x] Update frontend API config
+- [x] Update backend CORS and Swagger config
+- [x] Update documentation
+- [x] Clean up unused/legacy WS URLs
+- [x] Migrate Backend API Connections (Render instance updated to: `healthcare-backend-8tfs.onrender.com`)
+- [x] Refactor Emergency Tracking WebSocket (Point to dynamic `VITE_API_URL` compatible gateway)
+- [x] Professionalize Production Environment (Purge `localhost` fallbacks)
+
 ## Scope and Goals
 
-- Recreate the React + TypeScript + Vite app with Tailwind and the existing UI system
-- Implement backend API authentication and profiles, protected routes, and feature modules (dashboard, patients, appointments, medical records, referrals, chat, notifications, AI tools, DICOM viewer, files, admin)
 - Ensure environment parity, predictable builds, and a deployable artifact
 
 ## Prerequisites
 
 - Node.js 18+
 - npm 9+ (or yarn/pnpm)
-- Backend API endpoint (api.unlimtedhealth.com)
+- Backend API endpoint (https://healthcare-backend-8tfs.onrender.com/api)
 - GitHub/Vercel (or Netlify/AWS) for deployment
 
 ## Phase 1 — Project Foundation
@@ -67,7 +74,7 @@ npx tailwindcss init -p
 
 ```env
 # Backend API Configuration
-VITE_API_URL=https://api.unlimtedhealth.com/api
+VITE_API_URL=https://healthcare-backend-8tfs.onrender.com/api
 VITE_APP_ENV=development
 
 # Feature Flags

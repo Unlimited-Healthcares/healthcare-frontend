@@ -1,16 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { SOCKET_IO_PATH, getSocketBaseUrl } from '@/lib/websocket-utils';
 import type { GenericObject } from '@/types/common';
-
-interface TrackingMessage {
-  type: string;
-  data?: GenericObject;
-  ambulanceId?: string;
-  requestId?: string;
-  alertId?: string;
-  timestamp?: string;
-  message?: string;
-}
+import { useAuth } from '@/hooks/useAuth';
 
 interface EmergencyTrackingHook {
   isConnected: boolean;
@@ -19,115 +11,71 @@ interface EmergencyTrackingHook {
   sendAlertStatusUpdate: (alertId: string, status: string, data?: GenericObject) => void;
   subscribe: (eventType: string, callback: (data: GenericObject) => void) => void;
   unsubscribe: (eventType: string, callback?: (data: GenericObject) => void) => void;
+  watchRequest: (requestId: string) => void;
+  unwatchRequest: (requestId: string) => void;
 }
 
 export function useEmergencyTracking(): EmergencyTrackingHook {
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const { user } = useAuth();
   const subscribersRef = useRef<Map<string, Set<(data: GenericObject) => void>>>(new Map());
 
   useEffect(() => {
-    const connectWebSocket = () => {
-      try {
-        const wsUrl = process.env.VITE_EMERGENCY_WS_URL || 'ws://localhost:8080/emergency-tracking';
-        wsRef.current = new WebSocket(wsUrl);
+    const baseUrl = getSocketBaseUrl();
+    const socket = io(`${baseUrl}/emergency`, {
+      path: SOCKET_IO_PATH,
+      transports: ['websocket', 'polling'],
+      autoConnect: true
+    });
 
-        wsRef.current.onopen = () => {
-          console.log('Emergency tracking WebSocket connected');
-          setIsConnected(true);
-          toast.success('Emergency tracking connected');
-        };
+    socketRef.current = socket;
 
-        wsRef.current.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-            
-            switch (message.type) {
-              case 'connection_established':
-                console.log('Emergency tracking connection established');
-                break;
-              case 'ambulance_location_update':
-              case 'request_status_update':
-              case 'alert_status_update': {
-                // Notify subscribers
-                const subscribers = subscribersRef.current.get(message.type);
-                if (subscribers) {
-                  subscribers.forEach(callback => callback(message.data));
-                }
-                break;
-              }
-              case 'error':
-                console.error('WebSocket error:', message.message);
-                toast.error(`Tracking error: ${message.message}`);
-                break;
-              default:
-                console.log('Received message:', message);
-            }
-          } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
-          }
-        };
+    socket.on('connect', () => {
+      setIsConnected(true);
+      if (user) {
+        socket.emit('authenticate', { userId: user.id });
+      }
+    });
 
-        wsRef.current.onclose = () => {
-          console.log('Emergency tracking WebSocket disconnected');
-          setIsConnected(false);
-          toast.info('Emergency tracking disconnected');
-          
-          // Attempt to reconnect after 3 seconds
-          setTimeout(connectWebSocket, 3000);
-        };
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
 
-        wsRef.current.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          setIsConnected(false);
-          toast.error('Emergency tracking connection error');
-        };
-      } catch (error) {
-        console.error('Failed to create WebSocket connection:', error);
-        toast.error('Failed to connect to emergency tracking');
+    const handleEvent = (event: string, data: any) => {
+      const subscribers = subscribersRef.current.get(event);
+      if (subscribers) {
+        subscribers.forEach(callback => callback(data));
       }
     };
 
-    connectWebSocket();
+    socket.on('ambulance_location_update', (data) => handleEvent('ambulance_location_update', data));
+    socket.on('request_status_update', (data) => handleEvent('request_status_update', data));
+    socket.on('alert_status_update', (data) => handleEvent('alert_status_update', data));
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      socket.disconnect();
     };
+  }, [user]);
+
+  const watchRequest = useCallback((requestId: string) => {
+    socketRef.current?.emit('watch_request', { requestId });
   }, []);
 
-  const sendMessage = (message: TrackingMessage) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket not connected. Message not sent:', message);
-      toast.warning('Emergency tracking not connected');
-    }
-  };
+  const unwatchRequest = useCallback((requestId: string) => {
+    socketRef.current?.emit('unwatch_request', { requestId });
+  }, []);
 
   const sendLocationUpdate = (ambulanceId: string, latitude: number, longitude: number) => {
-    sendMessage({
-      type: 'ambulance_location',
-      ambulanceId,
-      data: { latitude, longitude }
-    });
+    socketRef.current?.emit('ambulance_location', { ambulanceId, data: { latitude, longitude } });
   };
 
   const sendRequestStatusUpdate = (requestId: string, status: string, data: GenericObject = {}) => {
-    sendMessage({
-      type: 'request_status',
-      requestId,
-      data: { status, ...data }
-    });
+    socketRef.current?.emit('request_status', { requestId, data: { status, ...data } });
   };
 
   const sendAlertStatusUpdate = (alertId: string, status: string, data: GenericObject = {}) => {
-    sendMessage({
-      type: 'alert_status',
-      alertId,
-      data: { status, ...data }
-    });
+    socketRef.current?.emit('alert_status', { alertId, data: { status, ...data } });
   };
 
   const subscribe = (eventType: string, callback: (data: GenericObject) => void) => {
@@ -151,6 +99,9 @@ export function useEmergencyTracking(): EmergencyTrackingHook {
     sendRequestStatusUpdate,
     sendAlertStatusUpdate,
     subscribe,
-    unsubscribe
+    unsubscribe,
+    watchRequest,
+    unwatchRequest
   };
 }
+

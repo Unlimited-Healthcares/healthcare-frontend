@@ -42,6 +42,7 @@ export class ApiClient {
     }
 
     try {
+      // console.log(`[API Client] Fetching: ${url}`, { method: options.method || 'GET' });
       const response = await fetch(url, {
         ...options,
         headers,
@@ -110,7 +111,7 @@ export class ApiClient {
         err.status = response.status;
         err.statusCode = response.status;
         err.data = parsedError;
-        console.error('API Client: Request failed:', response.status, errorMessage, parsedError || rawErrorText);
+        console.error(`API Client: Request failed (${response.status}) for ${url}:`, errorMessage, parsedError || rawErrorText);
 
         // If it's a 401 and we couldn't refresh, just log it but don't force logout/redirect
         // as the user requested "the token should not even be expiring at all"
@@ -135,11 +136,14 @@ export class ApiClient {
         // console.log('✅ Parsed Response:', parsedResponse);
         return parsedResponse;
       } catch (parseError) {
-        console.error('API Client: Failed to parse JSON response:', parseError);
+        console.error(`API Client: Failed to parse JSON response from ${url}:`, parseError);
         throw new Error('Invalid JSON response from server');
       }
     } catch (error) {
-      console.error('🚨 API Request Error:', error);
+      console.error(`🚨 API Request Error for ${url}:`, error);
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('🛑 Network error or CORS block. Possible causes: Server is down, invalid URL, or CORS policy mismatch.');
+      }
       throw error;
     }
   }

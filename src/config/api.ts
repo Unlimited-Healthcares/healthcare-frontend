@@ -4,4 +4,4 @@
  */
 export const API_BASE_URL =
   (import.meta.env.VITE_API_URL as string | undefined)?.trim() ||
-  'https://healthcare-backend-vih6.onrender.com/api';
+  'https://healthcare-backend-8tfs.onrender.com/api';

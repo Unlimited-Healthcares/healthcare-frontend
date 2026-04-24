@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     allowNavigation: [
-      'healthcare-backend-vih6.onrender.com'
+      'healthcare-backend-8tfs.onrender.com'
     ]
   },
   plugins: {
@@ -28,7 +28,7 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     CapacitorUpdater: {
-      updateUrl: 'https://healthcare-backend-vih6.onrender.com/api/ota/check',
+      updateUrl: 'https://healthcare-backend-8tfs.onrender.com/api/ota/check',
       autoUpdate: true,
       statsUrl: '',
     },

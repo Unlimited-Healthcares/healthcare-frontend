@@ -3,7 +3,7 @@
 Set the following env vars for local debugging:
 
 ```
-VITE_API_URL=https://api.unlimtedhealth.com/api
+VITE_API_URL=https://healthcare-backend-8tfs.onrender.com/api
 VITE_DEBUG_INVITES=true
 ```
 
