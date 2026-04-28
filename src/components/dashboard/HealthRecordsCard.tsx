@@ -108,7 +108,10 @@ export function HealthRecordsCard() {
         // Smart Lookup Fallback: Check approved connections or recent reports
         try {
           const discovery = await discoveryService.getSentRequests({ status: 'approved', limit: 5 });
-          const center = discovery.requests.find(r => r.recipientType === 'center');
+          const center = discovery.requests.find(r => 
+            r.recipient?.roles?.includes('center') || 
+            r.requestType?.includes('center')
+          );
           if (center && isValidUUID(center.recipientId)) {
             centerId = center.recipientId;
           } else {

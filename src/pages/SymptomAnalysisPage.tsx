@@ -632,8 +632,8 @@ const SymptomAnalysisPage: React.FC = () => {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/20 to-blue-50/20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-20">
+        <div className="min-h-screen bg-slate-50/50">
+          <div className="healthcare-container mx-auto px-4 sm:px-6 py-6 pb-40 md:pb-20">
 
             {/* ── Header ── */}
             <div className="mb-6">
@@ -770,7 +770,7 @@ const SymptomAnalysisPage: React.FC = () => {
                         </div>
 
                         {/* How it works */}
-                        <div className="bg-violet-50 rounded-2xl border border-violet-100 p-4 space-y-3">
+                        <div className="bg-violet-50/50 rounded-3xl border border-violet-100 p-5 space-y-4 shadow-sm mb-10">
                           <p className="text-[10px] font-black text-violet-500 uppercase tracking-widest">How It Works</p>
                           {[
                             { step: '1', text: 'You describe symptoms (free text)' },
@@ -784,6 +784,9 @@ const SymptomAnalysisPage: React.FC = () => {
                             </div>
                           ))}
                         </div>
+
+                        {/* Explicit spacer for mobile bottom navigation clearance */}
+                        <div className="h-24 md:hidden" />
                       </div>
                     </div>
                   </>

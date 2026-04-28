@@ -206,7 +206,11 @@ export default function HealthRecords() {
       try {
         console.log('🔍 Smart Lookup: No primary centerId, checking connections...');
         const connections = await discoveryService.getSentRequests({ status: 'approved', limit: 10 });
-        const centerConnection = connections.requests.find(r => r.recipientType === 'center' || r.requestType?.includes('center'));
+        const centerConnection = connections.requests.find(r => 
+          r.recipient?.roles?.includes('center') || 
+          r.requestType?.includes('center') ||
+          r.requestType === 'staff_invitation'
+        );
         if (centerConnection && isValidUUID(centerConnection.recipientId)) {
           centerId = centerConnection.recipientId;
           console.log('✅ Smart Lookup: Found connection centerId:', centerId);

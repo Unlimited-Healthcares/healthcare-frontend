@@ -132,7 +132,7 @@ export const calculateProfileCompletion = (
     ]
 
     // Professionals don't have these fields in the form
-    const patientOnlyFields = isProfessional ? [] : ['bloodGroup', 'genotype', 'height', 'weight']
+    const patientOnlyFields = isProfessional ? [] : ['bloodGroup', 'genotype', 'height', 'weight', 'bodyTemperature', 'bloodPressure', 'allergies', 'chronicDisease']
 
     // Only professionals have these
     const professionalFields = isProfessional
@@ -230,7 +230,7 @@ export const getMissingFields = (
     ]
 
     // Professionals don't have these fields in the form
-    const patientOnlyFields = isProfessional ? [] : ['bloodGroup', 'genotype', 'height', 'weight']
+    const patientOnlyFields = isProfessional ? [] : ['bloodGroup', 'genotype', 'height', 'weight', 'bodyTemperature', 'bloodPressure', 'allergies', 'chronicDisease']
 
     // Only professionals have these
     const professionalFields = isProfessional

@@ -82,6 +82,10 @@ const profileSchema = z.object({
   genotype: z.string().optional().or(z.literal('')),
   height: z.string().optional().or(z.literal('')),
   weight: z.string().optional().or(z.literal('')),
+  bodyTemperature: z.string().optional().or(z.literal('')),
+  bloodPressure: z.string().optional().or(z.literal('')),
+  allergies: z.string().optional().or(z.literal('')),
+  chronicDisease: z.string().optional().or(z.literal('')),
   // Location
   location: z.object({
     city: z.string().optional().or(z.literal('')),
@@ -820,8 +824,8 @@ const IndividualProfileForm: React.FC<IndividualProfileFormProps> = ({
             {isPatient && (
               <>
                 <div className="pt-2 border-t border-gray-100">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Medical Vitals</h4>
-                  <p className="text-xs text-gray-500 mb-4">Basic medical identifiers for personalised care.</p>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Clinical Vitals</h4>
+                  <p className="text-xs text-gray-500 mb-4">Core physiological indicators for clinical assessment.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -863,6 +867,44 @@ const IndividualProfileForm: React.FC<IndividualProfileFormProps> = ({
                       <Input id="weight" type="number" step="0.01" min="0" {...register('weight')} disabled={!isEditing} className={`pl-10 ${!isEditing ? 'bg-gray-50' : ''}`} placeholder="e.g., 72" />
                     </div>
                     {errors.weight && <p className="text-sm text-red-600">{(errors.weight as any)?.message}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bodyTemperature">Body Temperature (°C)</Label>
+                    <div className="relative">
+                      <Stethoscope className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input id="bodyTemperature" type="number" step="0.1" {...register('bodyTemperature')} disabled={!isEditing} className={`pl-10 ${!isEditing ? 'bg-gray-50' : ''}`} placeholder="e.g., 36.5" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bloodPressure">Blood Pressure (mmHg)</Label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input id="bloodPressure" {...register('bloodPressure')} disabled={!isEditing} className={`pl-10 ${!isEditing ? 'bg-gray-50' : ''}`} placeholder="e.g., 120/80" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="allergies">Known Allergies</Label>
+                    <Textarea id="allergies" {...register('allergies')} disabled={!isEditing} className={!isEditing ? 'bg-gray-50' : ''} placeholder="List any medical, food, or environmental allergies..." />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="chronicDisease">Chronic Disease Status</Label>
+                    <Select value={watch('chronicDisease') || ''} onValueChange={(v) => setValue('chronicDisease', v)} disabled={!isEditing}>
+                      <SelectTrigger id="chronicDisease" className={!isEditing ? 'bg-gray-50' : ''}>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Yes</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="na">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </>

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "postbuild": "rm -f dist.zip dist/dist.zip && cd dist && zip -r ../dist.zip . -x \"*.zip\" && cp ../dist.zip ./dist.zip && cd ..",
+    "postbuild": "node scripts/zip-dist.js",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",

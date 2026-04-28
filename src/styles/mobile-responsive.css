@@ -1,29 +1,37 @@
-
 /* 
   MOBILE RESPONSIVENESS MASTER FIX (ULTRA-AGGRESSIVE)
   This file standardizes all mobile layouts across the app.
 */
 
 @media (max-width: 767px) {
+
   /* FORCE GLOBAL CONTAINMENT */
-  html, body, #root, main {
+  html,
+  body,
+  #root,
+  main {
     max-width: 100vw !important;
     overflow-x: hidden !important;
   }
 
   /* 1. GLOBAL BOTTOM SPACING & FULL SCREEN FIX */
-  body main, 
+  body main,
   body [class*="Layout"] main {
-    padding-bottom: 100px !important; /* Reduced from 180px */
+    padding-bottom: 100px !important;
+    /* Reduced from 180px */
     padding-top: 10px !important;
     min-height: 100vh !important;
-    background-color: white !important; /* Force white background for full-screen look */
+    background-color: white !important;
+    /* Force white background for full-screen look */
     display: flex !important;
     flex-direction: column !important;
   }
 
   /* 2. GREETINGS & TITLES REDUCTION */
-  body h1, body .text-3xl, body [class*="Dashboard"] h1, body [class*="Profile"] h1 {
+  body h1,
+  body .text-3xl,
+  body [class*="Dashboard"] h1,
+  body [class*="Profile"] h1 {
     font-size: 1.25rem !important;
     line-height: 1.2 !important;
     word-break: break-word !important;

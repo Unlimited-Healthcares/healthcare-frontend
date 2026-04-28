@@ -107,12 +107,12 @@ const DiscoveryPage: React.FC = () => {
   useEffect(() => {
     const params = getUrlParams();
     const updatedParams = { ...searchParams, ...params, page: 1 };
-    
+
     // Only set if different to avoid unnecessary re-renders
     if (JSON.stringify(updatedParams) !== JSON.stringify(searchParams)) {
       setSearchParams(updatedParams);
     }
-    
+
     // Perform search on mount or when URL changes
     performSearch(updatedParams);
     isFirstRender.current = false;
@@ -121,7 +121,7 @@ const DiscoveryPage: React.FC = () => {
   // Auto-perform search only when specific filters change after initial render
   useEffect(() => {
     if (isFirstRender.current) return;
-    
+
     if (searchParams.type) {
       performSearch(searchParams);
     }
@@ -369,7 +369,7 @@ const DiscoveryPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-cyan-50/20 py-4 md:py-8">
+      <div className="w-full bg-gradient-to-br from-blue-50/30 via-white to-cyan-50/20 py-4 md:py-8 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
           <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">

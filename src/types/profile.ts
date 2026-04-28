@@ -40,6 +40,10 @@ export interface BaseUserProfile {
     postalCode?: string
     coordinates?: { lat?: number; lng?: number }
   }
+  bodyTemperature?: number
+  bloodPressure?: string
+  allergies?: string
+  chronicDisease?: 'yes' | 'no' | 'na'
   createdAt: string
   updatedAt: string
   paymentSettings?: PaymentSettings
@@ -252,6 +256,10 @@ export interface ProfileFormData {
     country?: string
     postalCode?: string
   }
+  bodyTemperature?: string
+  bloodPressure?: string
+  allergies?: string
+  chronicDisease?: string
   specialization?: string
   licenseNumber?: string
   experience?: string
