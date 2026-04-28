@@ -551,16 +551,16 @@
 
   /* Fix for Dialog/Modals appearing behind Navigation elements */
   [data-radix-portal] {
-    z-index: 500 !important;
+    z-index: 2000 !important;
   }
 
   /* Fix for sidebar overlay and sidebar positioning */
   .sidebar-overlay {
-    z-index: 400 !important;
+    z-index: 1000 !important;
   }
 
   .sidebar-content {
-    z-index: 450 !important;
+    z-index: 1010 !important;
   }
 
   /* Hide scrollbar for horizontal scroll containers */

@@ -117,7 +117,7 @@ const DashboardHome = () => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1 sm:mb-2">
                 <h1 className="text-xl sm:text-3xl font-bold text-gray-800 truncate">
-                  Welcome back, {userName}
+                  {userName}
                 </h1>
                 {isCenterRole && (
                   <div className="flex items-center gap-2 mt-1 -mb-1">
@@ -374,7 +374,7 @@ const DashboardHome = () => {
   return (
     <div className="container mx-auto pb-32 sm:pb-12 max-w-full">
       <WelcomeHeader
-        title={`Welcome back, ${userName}!`}
+        title={`${userName}!`}
         subtitle={roleInfo.sub}
         roleLabel={roleInfo.label}
         badgeColor={roleInfo.color}

@@ -20,6 +20,7 @@ interface SearchResultsProps {
   selectedIds?: string[];
   onToggleSelect?: (id: string) => void;
   selectedService?: string;
+  onRetry?: () => void;
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -35,7 +36,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   isSelectMode = false,
   selectedIds = [],
   onToggleSelect,
-  selectedService
+  selectedService,
+  onRetry
 }) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +106,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Search Error</h3>
           <p className="text-gray-600 text-center mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
+          <Button onClick={() => onRetry ? onRetry() : window.location.reload()} variant="outline">
             Try Again
           </Button>
         </CardContent>

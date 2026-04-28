@@ -20,6 +20,7 @@ import { Capacitor } from '@capacitor/core';
 import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 import { Preferences } from '@capacitor/preferences';
 import { ClinicalSecurityGate } from '@/components/medical-records/ClinicalSecurityGate';
+import { discoveryService } from '@/services/discoveryService';
 
 /**
  * RecordViewerWrapper fetches a medical record by ID and displays it using MedicalRecordViewer.
@@ -193,18 +194,30 @@ export default function HealthRecords() {
       return;
     }
 
-    // Get centerId from user profile or data
-    const centerId = data.centerId || (user as any)?.center_id || (user as any)?.centerId;
+    // Helper to validate UUID
+    const isValidUUID = (id: any) => 
+      typeof id === 'string' && uuidRegex.test(id) && id.toLowerCase() !== 'centerid' && id.toLowerCase() !== 'default-center';
 
-    console.log('User profile for centerId:', {
-      user: user,
-      center_id: (user as any)?.center_id,
-      centerId: (user as any)?.centerId,
-      resolvedCenterId: centerId
-    });
+    // Get centerId from user profile or data, prioritizing valid UUIDs
+    let centerId = data.centerId || (user as any)?.center_id || (user as any)?.centerId;
+    
+    // Smart Lookup Fallback: If still no centerId, try to find an approved connection
+    if (!isValidUUID(centerId)) {
+      try {
+        console.log('🔍 Smart Lookup: No primary centerId, checking connections...');
+        const connections = await discoveryService.getSentRequests({ status: 'approved', limit: 10 });
+        const centerConnection = connections.requests.find(r => r.recipientType === 'center' || r.requestType?.includes('center'));
+        if (centerConnection && isValidUUID(centerConnection.recipientId)) {
+          centerId = centerConnection.recipientId;
+          console.log('✅ Smart Lookup: Found connection centerId:', centerId);
+        }
+      } catch (e) {
+        console.warn('Smart lookup failed:', e);
+      }
+    }
 
-    if (!centerId) {
-      toast.error('Unable to determine healthcare center. Please contact support.');
+    if (!isValidUUID(centerId)) {
+      toast.error('Healthcare facility identification failed. Please link your profile to a center in Discovery or Settings.');
       return;
     }
 

@@ -335,10 +335,10 @@ export const PatientRequestModal = ({ isOpen, onClose, recipient, onSend, presel
                   </div>
                   <div>
                     <h2 className="text-2xl font-black tracking-tight leading-tight uppercase">Clinical Intake</h2>
-                    <p className="text-blue-200 text-sm font-medium tracking-wide flex items-center gap-1.5">
+                    <DialogDescription className="text-blue-200 text-sm font-medium tracking-wide flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse block" />
                       Direct Selection Portal
-                    </p>
+                    </DialogDescription>
                   </div>
                 </div>
                 <Button variant="ghost" onClick={handleClose} className="h-10 w-10 p-0 rounded-xl bg-white/10 hover:bg-white/20 text-white">
@@ -368,7 +368,7 @@ export const PatientRequestModal = ({ isOpen, onClose, recipient, onSend, presel
             {!loading && !isSuccess && (
               <form onSubmit={handleSubmit} className="flex flex-col h-full">
                 <ScrollArea className="flex-1">
-                  <div className="p-6 sm:p-8 max-w-3xl mx-auto">
+                  <div className="p-6 sm:p-8 pb-12 sm:pb-16 max-w-3xl mx-auto">
                     <div className="space-y-8">
                       {currentStep === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -516,7 +516,7 @@ export const PatientRequestModal = ({ isOpen, onClose, recipient, onSend, presel
                   </div>
                 </ScrollArea>
 
-                <div className="flex justify-between items-center gap-4 px-6 py-4 sm:px-10 sm:py-6 border-t border-slate-100 bg-white shrink-0 mb-safe">
+                <div className="flex justify-between items-center gap-4 px-6 py-6 sm:px-10 sm:py-8 border-t border-slate-100 bg-white shrink-0 pb-safe">
                   {currentStep > 1 && (
                     <Button type="button" variant="ghost" onClick={() => setCurrentStep(prev => prev - 1)} className="font-black uppercase text-[10px] tracking-widest text-slate-400">
                       Back

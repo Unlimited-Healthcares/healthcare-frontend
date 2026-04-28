@@ -51,11 +51,11 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
           
           {!hasChildren && <div className="w-6" />}
           
-          <div className={`w-6 h-6 ${category.color || 'bg-gray-500'} rounded flex items-center justify-center text-white text-sm`}>
+          <div className={`w-10 h-10 ${category.color || 'bg-blue-600'} rounded-2xl flex-shrink-0 flex items-center justify-center text-white shadow-sm ring-4 ring-white`}>
             {isExpanded && hasChildren ? (
-              <FolderOpen className="w-4 h-4" />
+              <FolderOpen className="w-5 h-5" />
             ) : (
-              <span>{category.icon || '📁'}</span>
+              <Folder className="w-5 h-5" />
             )}
           </div>
           

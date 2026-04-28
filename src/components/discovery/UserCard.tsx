@@ -222,7 +222,7 @@ export const UserCard: React.FC<UserCardProps> = ({
         {/* Action Buttons - Gated for Institutional Control */}
         {showActions && (
           <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-            {((user as any).centerId || (user as any).metadata?.centerId) ? (
+            {((user as any)?.centerId || (user as any)?.metadata?.centerId) ? (
               <Button
                 onClick={() => onViewProfile(user.publicId)}
                 className="flex-1 bg-slate-900 hover:bg-black text-white font-black uppercase text-[10px] tracking-widest h-10 rounded-xl shadow-md"

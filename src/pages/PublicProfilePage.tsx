@@ -40,7 +40,7 @@ const PublicProfilePage: React.FC = () => {
   const displayName = profile ? (isCenter ? (profile as Center).name : (profile as User).name || (profile as User).displayName) : '';
   const rating = (profile as any)?.rating || 0;
   const reviewCount = (profile as any)?.reviewCount || 0;
-  const belongsToCenter = (profile as any).centerId || (profile as any).metadata?.centerId || (profile as any).profile?.centerId;
+  const belongsToCenter = (profile as any)?.centerId || (profile as any)?.metadata?.centerId || (profile as any)?.profile?.centerId;
 
   useEffect(() => {
     const loadProfile = async () => {

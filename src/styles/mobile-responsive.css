@@ -1,0 +1,85 @@
+
+/* 
+  MOBILE RESPONSIVENESS MASTER FIX (ULTRA-AGGRESSIVE)
+  This file standardizes all mobile layouts across the app.
+*/
+
+@media (max-width: 767px) {
+  /* FORCE GLOBAL CONTAINMENT */
+  html, body, #root, main {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* 1. GLOBAL BOTTOM SPACING & FULL SCREEN FIX */
+  body main, 
+  body [class*="Layout"] main {
+    padding-bottom: 100px !important; /* Reduced from 180px */
+    padding-top: 10px !important;
+    min-height: 100vh !important;
+    background-color: white !important; /* Force white background for full-screen look */
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 2. GREETINGS & TITLES REDUCTION */
+  body h1, body .text-3xl, body [class*="Dashboard"] h1, body [class*="Profile"] h1 {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+  }
+
+  /* 3. DASHBOARD BUTTONS GRID (2x2) */
+  body [class*="Dashboard"] .flex-wrap.items-center.gap-2,
+  body [class*="DoctorDashboard"] .flex-wrap {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  /* 4. PROFILE PAGE FIXES */
+  body [class*="Profile"] .pt-2.flex.gap-2,
+  body [class*="ProfileForm"] .pt-2.flex,
+  body .flex-1.space-y-1 .flex.gap-2.pt-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  body [class*="Profile"] .pt-2.flex.gap-2 button {
+    width: auto !important;
+    min-width: 140px !important;
+  }
+
+  /* 5. APPOINTMENT TRENDS & CHARTS CENTERING */
+  body .flex.items-center.justify-center.h-full.text-gray-400.italic {
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 150px !important;
+  }
+
+  /* 6. EDGE-TO-EDGE BORDERLINE FIX */
+  body .healthcare-container,
+  body [class*="max-w-7xl"],
+  body .container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* MASTER Z-INDEX HIERARCHY */
+[data-radix-portal],
+#react-hot-toast,
+[data-sonner-toaster] {
+  z-index: 99999 !important;
+}
+
+[class*="BottomTabs"],
+.fixed.bottom-0.left-0.right-0 {
+  z-index: 600 !important;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchFilters } from '@/components/discovery/SearchFilters';
@@ -17,6 +18,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose, DrawerFo
 
 const DiscoveryPage: React.FC = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   // Parse URL parameters
   const getUrlParams = () => {
@@ -99,20 +101,43 @@ const DiscoveryPage: React.FC = () => {
     return hasValidDisplayName && hasValidSpecialty;
   });
 
-  // Auto-perform search when type, specialty or service changes for smoother UX
+  const isFirstRender = React.useRef(true);
+
+  // Sync URL parameters with state and perform initial search
   useEffect(() => {
+    const params = getUrlParams();
+    const updatedParams = { ...searchParams, ...params, page: 1 };
+    
+    // Only set if different to avoid unnecessary re-renders
+    if (JSON.stringify(updatedParams) !== JSON.stringify(searchParams)) {
+      setSearchParams(updatedParams);
+    }
+    
+    // Perform search on mount or when URL changes
+    performSearch(updatedParams);
+    isFirstRender.current = false;
+  }, [window.location.search]);
+
+  // Auto-perform search only when specific filters change after initial render
+  useEffect(() => {
+    if (isFirstRender.current) return;
+    
     if (searchParams.type) {
       performSearch(searchParams);
     }
   }, [searchParams.type, searchParams.specialty, searchParams.service]);
 
+  const searchCounter = React.useRef(0);
+
   // Perform search
   const performSearch = async (params: SearchParams) => {
+    const currentSearchId = ++searchCounter.current;
     setLoading(true);
     setError(null);
     setSelectedIds([]); // Clear selection on new search
 
     try {
+      let responseData;
       if (params.type === 'center') {
         const response: CenterSearchResponse = await discoveryService.searchCenters({
           type: params.specialty,
@@ -123,32 +148,31 @@ const DiscoveryPage: React.FC = () => {
           page: params.page,
           limit: params.limit
         });
-
-        console.log('Center Search Response:', response);
-        console.log('Center Results:', response.centers);
-
-        setResults(response.centers);
-        setTotalPages(response.totalPages);
+        responseData = { results: response.centers, totalPages: response.totalPages };
       } else {
         const response: UserSearchResponse = await discoveryService.searchUsers({
           ...params,
-          // If multiple services are requested, we might need a custom handling 
-          // but for now, we'll pass the string and assume backend handles it
           service: params.service
         });
+        responseData = { results: response.users, totalPages: response.totalPages };
+      }
 
-        console.log('User Search Response:', response);
-        console.log('User Results:', response.users);
-
-        setResults(response.users);
-        setTotalPages(response.totalPages);
+      // Only update state if this is still the most recent search
+      if (currentSearchId === searchCounter.current) {
+        setResults(responseData.results);
+        setTotalPages(responseData.totalPages);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Search failed. Please try again.';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      if (currentSearchId === searchCounter.current) {
+        const errorMessage = err instanceof Error ? err.message : 'Search failed. Please try again.';
+        setError(errorMessage);
+        // Only show toast once for the most recent failed search
+        toast.error(errorMessage, { id: 'search-error' });
+      }
     } finally {
-      setLoading(false);
+      if (currentSearchId === searchCounter.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -309,8 +333,8 @@ const DiscoveryPage: React.FC = () => {
 
   // Handle view profile
   const handleViewProfile = (publicId: string) => {
-    // Navigate to profile page or open profile modal
-    window.open(`/profile/${publicId}`, '_blank');
+    // Navigate to internal profile page
+    navigate(`/profile/${publicId}`);
   };
 
   // Handle request modal close
@@ -338,13 +362,10 @@ const DiscoveryPage: React.FC = () => {
     console.log('Request success confirmed in DiscoveryPage');
   };
 
-  // Initial search and sync with URL
-  useEffect(() => {
-    const params = getUrlParams();
-    const updatedParams = { ...searchParams, ...params, page: 1 };
-    setSearchParams(updatedParams);
-    performSearch(updatedParams);
-  }, [window.location.search]);
+  // Handle retry from SearchResults
+  const handleRetry = () => {
+    performSearch(searchParams);
+  };
 
   return (
     <DashboardLayout>
@@ -475,6 +496,7 @@ const DiscoveryPage: React.FC = () => {
             results={filteredResults}
             loading={loading}
             error={error || undefined}
+            onRetry={handleRetry}
             onRequest={handleRequest}
             onViewProfile={handleViewProfile}
             onCall={async (u: any) => {

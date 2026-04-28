@@ -9,6 +9,7 @@ import { LanguageProvider } from '@/hooks/useTranslation'
 import App from '@/App'
 import { initCapacitor } from '@/services/capacitor'
 import './index.css'
+import './styles/mobile-responsive.css'
 
 // Initialize Capacitor on native platforms
 initCapacitor();

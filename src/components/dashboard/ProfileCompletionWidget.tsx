@@ -61,14 +61,16 @@ export const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = (
       </div>
       
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-lg font-black text-gray-900 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg text-[13px] font-black ring-4 ring-blue-50">
               {completion}%
             </span>
-            Profile Completion
-          </CardTitle>
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold uppercase tracking-wider text-[10px]">
+            <CardTitle className="text-xl font-black text-gray-900 leading-tight">
+              Profile Completion
+            </CardTitle>
+          </div>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold uppercase tracking-wider text-[9px] px-1.5 py-0.5 whitespace-nowrap">
             Action Required
           </Badge>
         </div>
@@ -80,7 +82,7 @@ export const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = (
             <span>Progress</span>
             <span>{completion}%</span>
           </div>
-          <Progress value={completion} className="h-3 bg-blue-100" />
+          <Progress value={completion} className="h-4 bg-blue-100 rounded-full" />
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">

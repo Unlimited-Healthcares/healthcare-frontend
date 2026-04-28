@@ -187,11 +187,11 @@ export function DoctorDashboard() {
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">{dashboardTitle}</h1>
                     <p className="text-gray-500">Connecting with patients and colleagues. Here is your practice and collaboration overview.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <Button
                         onClick={() => navigate('/discovery?type=patient')}
                         variant="outline"
-                        className="rounded-xl border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 gap-2 font-bold px-3 sm:px-6 shadow-sm flex-1 sm:flex-none text-xs sm:text-sm"
+                        className="rounded-xl border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none text-xs sm:text-sm justify-center whitespace-nowrap"
                     >
                         <Search className="h-4 w-4" />
                         Find patients/link Doctor
@@ -199,7 +199,7 @@ export function DoctorDashboard() {
                     <Button
                         onClick={() => navigate('/discovery?type=biotech_engineer')}
                         variant="outline"
-                        className="rounded-xl border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none"
+                        className="rounded-xl border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none text-xs sm:text-sm justify-center whitespace-nowrap"
                     >
                         <Cpu className="h-4 w-4" />
                         Connect Biotech Specialist
@@ -207,14 +207,14 @@ export function DoctorDashboard() {
                     <Button
                         onClick={() => navigate('/discovery?type=doctor')}
                         variant="outline"
-                        className="rounded-xl border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none"
+                        className="rounded-xl border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none text-xs sm:text-sm justify-center whitespace-nowrap"
                     >
                         <Users className="h-4 w-4" />
                         Find Colleagues
                     </Button>
                     <Button
                         onClick={() => setIsSpecialtyModalOpen(true)}
-                        className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white gap-2 font-bold px-4 sm:px-6 shadow-md shadow-blue-100 flex-1 sm:flex-none"
+                        className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white gap-2 font-bold px-4 sm:px-6 shadow-md shadow-blue-100 flex-1 sm:flex-none text-xs sm:text-sm justify-center whitespace-nowrap"
                     >
                         <Stethoscope className="h-4 w-4" />
                         {profile?.specialization ? 'Update Specialty' : 'Add Specialty'}

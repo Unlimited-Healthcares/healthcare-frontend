@@ -142,7 +142,7 @@ export const CompactDoctorCard: React.FC<CompactDoctorCardProps> = ({
   const isAmbulanceTeam = currentUser?.roles?.includes('ambulance_service');
   const currentUserRole = currentUser?.roles?.[0] || 'patient';
   const isProfessionalViewingPatient = currentUserRole !== 'patient' && (user.roles?.includes('patient') || !!user.patientId);
-  const belongsToCenter = (user as any).centerId || (user as any).metadata?.centerId || (user as any).profile?.centerId;
+  const belongsToCenter = (user as any)?.centerId || (user as any)?.metadata?.centerId || (user as any)?.profile?.centerId;
 
   return (
     <div
@@ -390,11 +390,11 @@ export const CompactDoctorCard: React.FC<CompactDoctorCardProps> = ({
                         {(!accessVerified && !isAmbulanceTeam) ? <LucideLock className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center justify-between">
+                        <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center justify-between">
                           Voice Call
                           {(!accessVerified && !isAmbulanceTeam) && <Badge className="bg-amber-100 text-amber-700 border-none text-[7px] font-black">LOCKED</Badge>}
                           {isAmbulanceTeam && <Badge className="bg-rose-100 text-rose-700 border-none text-[7px] font-black">EMERGENCY</Badge>}
-                        </p>
+                        </div>
                         <p className="text-[10px] text-slate-500 font-medium lowercase">Direct audio connection</p>
                       </div>
                     </DropdownMenuItem>
@@ -414,24 +414,31 @@ export const CompactDoctorCard: React.FC<CompactDoctorCardProps> = ({
                         {(!accessVerified && !isAmbulanceTeam) ? <LucideLock className="h-4 w-4" /> : <Video className="h-4 w-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center justify-between">
+                        <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center justify-between">
                           Video Consult
                           {accessVerified === false && <Badge className="bg-blue-100 text-blue-700 border-none text-[7px] font-black">PREMIUM</Badge>}
-                        </p>
+                        </div>
                         <p className="text-[10px] text-slate-500 font-medium lowercase">Face-to-face HD session</p>
                       </div>
                     </DropdownMenuItem>
 
                     {accessVerified === false && (
-                      <div className="mt-2 p-3 bg-blue-600 rounded-2xl text-center shadow-lg shadow-blue-200 animate-pulse">
+                      <div className="mt-2 p-3 bg-blue-600 rounded-[1.5rem] text-center shadow-lg shadow-blue-200 animate-pulse border border-white/20">
                         <p className="text-[8px] font-black text-blue-100 uppercase tracking-widest mb-1.5">Consultation Barrier Active</p>
-                        <Button
-                          onClick={() => onRequest(user)}
-                          size="sm"
-                          className="w-full h-8 bg-white text-blue-700 hover:bg-white/90 font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm"
+                        <DropdownMenuItem
+                          asChild
+                          onSelect={() => {
+                            // The DropdownMenuItem onSelect automatically closes the menu
+                            onRequest(user);
+                          }}
                         >
-                          Book & Pay to Unlock
-                        </Button>
+                          <Button
+                            size="sm"
+                            className="w-full h-8 bg-white text-blue-700 hover:bg-white/90 font-black text-[9px] uppercase tracking-widest rounded-xl shadow-sm cursor-pointer border-none"
+                          >
+                            Book & Pay to Unlock
+                          </Button>
+                        </DropdownMenuItem>
                       </div>
                     )}
                   </DropdownMenuContent>

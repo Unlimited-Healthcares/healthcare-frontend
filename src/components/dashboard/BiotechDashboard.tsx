@@ -151,24 +151,32 @@ export function BiotechDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">Biotech Engineering Dashboard</h1>
-                    <p className="text-gray-500">Welcome back, {displayName}. Managing equipment lifecycle and technical services.</p>
+                    <p className="text-gray-500">{displayName}. Managing equipment lifecycle and technical services.</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <Button
                         onClick={() => navigate('/discovery?type=center')}
                         variant="outline"
-                        className="rounded-xl border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 gap-2 font-bold px-6 shadow-sm w-full sm:w-auto justify-center"
+                        className="rounded-xl border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none justify-center whitespace-nowrap text-xs sm:text-sm"
                     >
                         <Search className="h-4 w-4" />
                         Find Research Entities
                     </Button>
-                    <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white gap-2 font-bold px-4 sm:px-6 shadow-md shadow-blue-200 w-full sm:w-auto justify-center whitespace-nowrap">
+                    <Button
+                        onClick={() => navigate('/discovery?type=biotech_engineer')}
+                        variant="outline"
+                        className="rounded-xl border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none justify-center whitespace-nowrap text-xs sm:text-sm"
+                    >
+                        <Cpu className="h-4 w-4" />
+                        Connect Biotech Specialist
+                    </Button>
+                    <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white gap-2 font-bold px-4 sm:px-6 shadow-md shadow-blue-200 flex-1 sm:flex-none justify-center whitespace-nowrap text-xs sm:text-sm">
                         <PlusIcon className="h-4 w-4" />
                         New Analysis
                     </Button>
                     <Button
                         onClick={() => setIsSpecialtyModalOpen(true)}
-                        className="rounded-xl border-blue-200 bg-white text-blue-700 hover:bg-blue-50 gap-2 font-bold px-4 sm:px-6 shadow-sm w-full sm:w-auto justify-center"
+                        className="rounded-xl border-blue-200 bg-white text-blue-700 hover:bg-blue-50 gap-2 font-bold px-4 sm:px-6 shadow-sm flex-1 sm:flex-none justify-center whitespace-nowrap text-xs sm:text-sm"
                     >
                         <Stethoscope className="h-4 w-4" />
                         {profile?.specialization ? 'Update Specialty' : 'Add Specialty'}

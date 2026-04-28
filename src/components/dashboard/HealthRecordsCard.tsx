@@ -13,6 +13,7 @@ import { useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { patientService } from "@/services/patientService";
 import { useNavigate } from "react-router-dom";
+import { discoveryService } from "@/services/discoveryService";
 
 // No mock data - using dynamic records from backend
 
@@ -96,11 +97,44 @@ export function HealthRecordsCard() {
         }
       }
 
+      // 2. Resolve and validate centerId
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const isValidUUID = (id: any) => 
+        typeof id === 'string' && uuidRegex.test(id) && id.toLowerCase() !== 'centerid' && id.toLowerCase() !== 'default-center';
+
+      let centerId = (profile as any)?.center_id || (user as any)?.centerId || (profile as any)?.centerId || (user as any)?.center_id;
+
+      if (!isValidUUID(centerId)) {
+        // Smart Lookup Fallback: Check approved connections or recent reports
+        try {
+          const discovery = await discoveryService.getSentRequests({ status: 'approved', limit: 5 });
+          const center = discovery.requests.find(r => r.recipientType === 'center');
+          if (center && isValidUUID(center.recipientId)) {
+            centerId = center.recipientId;
+          } else {
+            // Check recent records as last resort
+            const connections = await medicalReportsService.getMedicalReports({ limit: 1 });
+            if (connections.data?.[0]?.centerId && isValidUUID(connections.data[0].centerId)) {
+              centerId = connections.data[0].centerId;
+            }
+          }
+        } catch (e) {
+          console.warn('Smart lookup failed in vault:', e);
+        }
+      }
+
+      if (!isValidUUID(centerId)) {
+        toast.dismiss();
+        toast.error("No linked facility found. Please link to a center in Discovery before uploading.");
+        setIsUploading(false);
+        return;
+      }
+
       toast.loading("Creating vault record...");
-      // 2. Create the medical record
+      // 3. Create the medical record
       const record = await medicalReportsService.createMedicalReport({
         patientId: pId,
-        centerId: (profile as any)?.center_id || (user as any)?.centerId || 'default-center',
+        centerId: centerId as string,
         title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
         recordType: 'EXTERNAL_DOCUMENT',
         category: 'general',
