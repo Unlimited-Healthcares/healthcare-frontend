@@ -80,10 +80,11 @@ const fileFormSchema = z.object({
 });
 
 interface FilesManagementProps {
-  centerId: string;
+  centerId?: string;
+  patientId?: string;
 }
 
-export function FilesManagement({ centerId }: FilesManagementProps) {
+export function FilesManagement({ centerId, patientId }: FilesManagementProps) {
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState<CenterFileWithDetails[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<CenterFileWithDetails[]>([]);
@@ -140,6 +141,7 @@ export function FilesManagement({ centerId }: FilesManagementProps) {
     try {
       const filesData = await centerManagementService.getFiles({
         center_id: centerId,
+        patient_id: patientId
       });
       setFiles(filesData);
       setFilteredFiles(filesData);

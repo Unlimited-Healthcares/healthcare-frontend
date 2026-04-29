@@ -7,8 +7,13 @@ import {
   CheckCircle,
   ChevronRight,
   ChevronLeft,
-  AlertCircle
+  AlertCircle,
+  Brain,
+  Sparkles,
+  FileSearch,
+  Check
 } from 'lucide-react';
+import symptomAnalysisService from '@/services/symptomAnalysisService';
 import { HealthcareCenter, CenterService, CreateAppointmentDto, TimeSlot } from '@/types/healthcare-centers';
 import { appointmentService } from '@/services/healthcareCentersService';
 import { Button } from '@/components/ui/button';
@@ -25,6 +30,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApprovedProviders } from '@/hooks/useApprovedProviders';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { cn } from '@/lib/utils';
 import { integrationsService } from '@/services/integrationsService';
 
 interface MedicalBookingProps {
@@ -50,6 +56,33 @@ const MedicalBooking: React.FC<MedicalBookingProps> = ({ center, services }) => 
     priority: 'normal',
     isRecurring: false
   });
+
+  const [aiTriageResult, setAiTriageResult] = useState<any>(null);
+  const [isAttachingAiResult, setIsAttachingAiResult] = useState(true);
+
+  // Load last AI triage result if available
+  useEffect(() => {
+    const sessionId = localStorage.getItem('last_ai_triage_session_id');
+    if (sessionId) {
+      const fetchTriage = async () => {
+        try {
+          const session = await symptomAnalysisService.getSession(sessionId);
+          if (session && session.triageResult) {
+            setAiTriageResult(session.triageResult);
+            // Pre-populate priority based on triage level
+            setFormData(prev => ({
+              ...prev,
+              priority: session.triageResult?.triageLevel === 'EMERGENCY' ? 'urgent' : 
+                        session.triageResult?.triageLevel === 'URGENT_CLINIC' ? 'high' : 'normal'
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to fetch AI triage for booking:", error);
+        }
+      };
+      fetchTriage();
+    }
+  }, []);
 
   const steps = [
     { id: 'service', title: 'Select Service', icon: Stethoscope },
@@ -99,8 +132,28 @@ const MedicalBooking: React.FC<MedicalBookingProps> = ({ center, services }) => 
       const selectedService = services.find(s => s.id === formData.appointmentTypeId);
       const amount = selectedService?.basePrice || 0;
 
+      // Prepare final notes with AI Triage summary if enabled
+      let finalNotes = formData.notes || '';
+      if (aiTriageResult && isAttachingAiResult) {
+        const aiSummary = `
+--- AI TRIAGE ASSESSMENT SUMMARY ---
+Triage Level: ${aiTriageResult.triageLevel.replace(/_/g, ' ')}
+Recommended Specialist: ${aiTriageResult.recommendedSpecialist || 'General Practitioner'}
+Potential Conditions: ${aiTriageResult.possibleConditions?.map((c: any) => `${c.name} (${c.likelihood})`).join(', ') || 'N/A'}
+Reported Red Flags: ${aiTriageResult.redFlags?.join(', ') || 'None reported'}
+Recommended Actions: ${aiTriageResult.recommendedActions?.join(', ') || 'N/A'}
+------------------------------------
+`.trim();
+        finalNotes = finalNotes ? `${finalNotes}\n\n${aiSummary}` : aiSummary;
+      }
+
+      const submissionData = {
+        ...formData,
+        notes: finalNotes
+      };
+
       // Create the appointment first
-      const appointment = await appointmentService.createAppointment(formData as CreateAppointmentDto);
+      const appointment = await appointmentService.createAppointment(submissionData as CreateAppointmentDto);
 
       if (amount > 0) {
         // Get best payment method from center settings

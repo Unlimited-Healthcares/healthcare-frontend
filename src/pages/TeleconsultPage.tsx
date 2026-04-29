@@ -76,25 +76,49 @@ const TeleconsultPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-                <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-                <p className="text-lg font-medium">Preparing your consultation room...</p>
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-950 text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600 rounded-full blur-[120px] animate-pulse" />
+                </div>
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-20 h-20 bg-blue-600/20 rounded-3xl flex items-center justify-center mb-8 animate-bounce">
+                        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                    </div>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-2">Initializing Agora</h2>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">Securing encryption channels...</p>
+                </div>
             </div>
         );
     }
 
     if (!conference || !user) {
-        return null;
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-950 text-white p-8 text-center">
+                <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mb-6">
+                    <Loader2 className="h-10 w-10 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-black uppercase tracking-tight mb-4">Room Unavailable</h2>
+                <p className="text-slate-400 font-bold text-sm max-w-xs mb-8">This consultation room could not be established or you lack the required authorization.</p>
+                <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-white text-black px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-all"
+                >
+                    Return to Dashboard
+                </button>
+            </div>
+        );
     }
 
     return (
         <ProtectedRoute>
-            <VideoConferenceRoom
-                conference={conference}
-                ws={ws}
-                userId={user.id}
-                onLeave={() => navigate('/dashboard')}
-            />
+            <div className="fixed inset-0 bg-black z-[200]">
+                <VideoConferenceRoom
+                    conference={conference}
+                    ws={ws}
+                    userId={user.id}
+                    onLeave={() => navigate('/dashboard')}
+                />
+            </div>
         </ProtectedRoute>
     );
 };

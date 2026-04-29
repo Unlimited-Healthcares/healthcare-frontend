@@ -39,6 +39,7 @@ import { DicomViewer } from './DicomViewer';
 import { HealthRecordsCard } from './HealthRecordsCard';
 import { AppointmentsCard } from './AppointmentsCard';
 import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
+import { ServiceManagement } from './ServiceManagement';
 
 import { useAuth } from '@/hooks/useAuth';
 import { QuickActions } from './QuickActions';
@@ -319,6 +320,7 @@ export function DoctorDashboard() {
                     <TabsTrigger value="appointments" className="rounded-lg px-6">Schedule</TabsTrigger>
                     <TabsTrigger value="records" className="rounded-lg px-6">Records</TabsTrigger>
                     <TabsTrigger value="imaging" className="rounded-lg px-6">Imaging</TabsTrigger>
+                    <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
                     <TabsTrigger value="analytics" className="rounded-lg px-6">Analytics</TabsTrigger>
                 </TabsList>
 
@@ -390,6 +392,14 @@ export function DoctorDashboard() {
 
                 <TabsContent value="imaging">
                     <DicomViewer />
+                </TabsContent>
+
+                <TabsContent value="services">
+                    <ServiceManagement
+                        userId={user?.id}
+                        centerId={(profile as any)?.centerId}
+                        centerType={(profile as any)?.centerType || 'clinic'}
+                    />
                 </TabsContent>
 
                 <TabsContent value="analytics">

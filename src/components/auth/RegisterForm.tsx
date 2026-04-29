@@ -189,6 +189,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                 {...register('name')}
                 type="text"
                 id="name"
+                autoComplete="name"
                 className={cn(
                   "block w-full px-4 py-3 rounded-xl border-gray-100 bg-white text-gray-900 placeholder-gray-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-600 transition-all font-medium",
                   errors.name && "border-red-300 focus:ring-red-50 focus:border-red-500"
@@ -207,6 +208,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                 {...register('email')}
                 type="email"
                 id="email"
+                autoComplete="email"
                 className={cn(
                   "block w-full px-4 py-3 rounded-xl border-gray-100 bg-white text-gray-900 placeholder-gray-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-600 transition-all font-medium",
                   errors.email && "border-red-300 focus:ring-red-50 focus:border-red-500"
@@ -248,6 +250,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   id="password"
+                  autoComplete="new-password"
                   className={cn(
                     "block w-full px-4 py-3 rounded-xl border-gray-100 bg-white text-gray-900 placeholder-gray-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-600 transition-all font-medium",
                     errors.password && "border-red-300 focus:ring-red-50 focus:border-red-500"
@@ -276,6 +279,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                 {...register('confirmPassword')}
                 type={showPassword ? 'text' : 'password'}
                 id="confirmPassword"
+                autoComplete="new-password"
                 className={cn(
                   "block w-full px-4 py-3 rounded-xl border-gray-100 bg-white text-gray-900 placeholder-gray-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-600 transition-all font-medium",
                   errors.confirmPassword && "border-red-300 focus:ring-red-50 focus:border-red-500"

@@ -46,6 +46,9 @@ import { healthcareCentersService } from '@/services/healthcareCentersService';
 import { requestsService } from '@/services/requestsService';
 import { healthRecordsApi } from '@/services/healthRecordsApi';
 import { useAuth } from '@/hooks/useAuth';
+import { hasPermission, getPermissions } from '@/lib/permissions';
+import { complianceApi } from '@/services/complianceApi';
+import { ShieldAlert } from 'lucide-react';
 
 interface Patient {
    id: string;
@@ -120,6 +123,7 @@ const COMMON_LABS = [
 ];
 
 export function ClinicalEncounterDashboard({ patient: initialPatient, onComplete, onCancel, initialStep = 1 }: ClinicalEncounterProps) {
+   const { user } = useAuth();
    const [step, setStep] = useState(initialPatient ? initialStep + 1 : 1);
    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(initialPatient || null);
    const [patientSearch, setPatientSearch] = useState('');
@@ -143,6 +147,19 @@ export function ClinicalEncounterDashboard({ patient: initialPatient, onComplete
       prescriptions: [] as any[],
       labsRequested: [] as string[]
    });
+
+   const [isEmergencyOverride, setIsEmergencyOverride] = useState(false);
+
+   const handleBreakGlass = async () => {
+      if (window.confirm("WARNING: You are initiating an EMERGENCY OVERRIDE (Break Glass). This action will grant you temporary full access to this patient's records. THIS ACTION IS LOGGED AND AUDITED FOR COMPLIANCE. Continue?")) {
+         setIsEmergencyOverride(true);
+         await complianceApi.logAction('EMERGENCY_OVERRIDE_ACTIVATED', 'CLINICAL_WORKSPACE', {
+            patientId: selectedPatient?.id,
+            reason: 'Code Blue / Emergency Access'
+         });
+         toast.success("Emergency Override Activated.");
+      }
+   };
 
    useEffect(() => {
       if (!selectedPatient) {
@@ -609,8 +626,27 @@ export function ClinicalEncounterDashboard({ patient: initialPatient, onComplete
                                              <div className="h-16 bg-white/5 rounded-2xl" />
                                           </div>
                                        ) : patientHistory.length > 0 ? (
-                                          patientHistory.slice(0, 5).map((rec, i) => (
-                                             <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-default group/item">
+                                          patientHistory
+                                             .filter(rec => {
+                                               const permissions = getPermissions(user?.roles);
+                                               if (rec.recordType === 'psychiatric' && !permissions.canViewPsychNotes && !isEmergencyOverride) {
+                                                 return false;
+                                               }
+                                               return true;
+                                             })
+                                             .slice(0, 5).map((rec, i) => (
+                                              <div 
+                                                key={i} 
+                                                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-default group/item" 
+                                                onMouseEnter={() => { 
+                                                   complianceApi.logAction('HISTORY_ITEM_SCANNED', 'CLINICAL_HISTORY', { 
+                                                      recordId: rec.id, 
+                                                      patientId: selectedPatient?.id, 
+                                                      emergencyAccess: isEmergencyOverride 
+                                                   }); 
+                                                }} 
+                                              >
+                                             
                                                 <p className="text-sm font-black text-white truncate group-hover/item:text-primary transition-colors">{rec.title || rec.diagnosis}</p>
                                                 <div className="flex items-center justify-between mt-1.5">
                                                    <p className="text-[10px] text-slate-500 font-bold">
@@ -627,9 +663,28 @@ export function ClinicalEncounterDashboard({ patient: initialPatient, onComplete
                                           </div>
                                        )}
 
-                                       <Button variant="ghost" className="w-full rounded-2xl border border-white/10 text-white/30 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-widest mt-6 py-6 transition-all group-hover:border-primary/30">
-                                          Browse Full Medical History
-                                       </Button>
+                                       {(hasPermission(user?.roles, 'canViewClinicalNotes') || isEmergencyOverride) && (
+                                          <Button variant="ghost" className="w-full rounded-2xl border border-white/10 text-white/30 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-widest mt-6 py-6 transition-all group-hover:border-primary/30">
+                                             Browse Full Medical History
+                                          </Button>
+                                       )}
+
+                                        {user?.roles?.includes('doctor') && !isEmergencyOverride && (
+                                           <Button 
+                                             variant="destructive" 
+                                             onClick={handleBreakGlass} 
+                                             className="w-full rounded-2xl bg-red-600/10 border border-red-500/20 text-red-500 hover:bg-red-600 hover:text-white text-[10px] font-black uppercase tracking-widest mt-3 py-6 transition-all animate-pulse" 
+                                           >
+                                              <ShieldAlert className="h-4 w-4 mr-2" />
+                                              Break Glass: Emergency Access
+                                           </Button>
+                                        )}
+                                        {isEmergencyOverride && (
+                                           <div className="w-full rounded-2xl bg-red-600 text-white text-center text-[10px] font-black uppercase tracking-widest mt-3 py-4 flex items-center justify-center gap-2" >
+                                              <ShieldAlert className="h-4 w-4" />
+                                              Emergency Access Active
+                                           </div>
+                                        )}
                                     </div>
                                  </div>
 
@@ -1005,15 +1060,17 @@ export function ClinicalEncounterDashboard({ patient: initialPatient, onComplete
                                           <p className="text-xl font-black text-slate-900">{selectedPatient?.name || 'Protocol Unknown'}</p>
                                        </div>
                                     </div>
-                                    <div className="flex items-start gap-5">
-                                       <div className="bg-primary/10 p-3 rounded-2xl text-primary shadow-inner">
-                                          <ActivityIcon className="h-6 w-6" />
+                                    {hasPermission(user?.roles, 'canViewDiagnoses') && (
+                                       <div className="flex items-start gap-5">
+                                          <div className="bg-primary/10 p-3 rounded-2xl text-primary shadow-inner">
+                                             <ActivityIcon className="h-6 w-6" />
+                                          </div>
+                                          <div>
+                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated Diagnosis</p>
+                                             <p className="text-xl font-black text-slate-900">{formData.diagnosis || "No primary diagnosis mapped"}</p>
+                                          </div>
                                        </div>
-                                       <div>
-                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated Diagnosis</p>
-                                          <p className="text-xl font-black text-slate-900">{formData.diagnosis || "No primary diagnosis mapped"}</p>
-                                       </div>
-                                    </div>
+                                    )}
                                     <div className="flex items-start gap-5">
                                        <div className="bg-purple-100/50 p-3 rounded-2xl text-purple-600 shadow-inner">
                                           <Pill className="h-6 w-6" />

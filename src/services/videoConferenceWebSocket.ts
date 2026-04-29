@@ -101,6 +101,14 @@ export class VideoConferenceWebSocket {
       this.eventHandlers.recording_stopped?.(data);
     });
 
+    this.socket.on('recording_requested', (data) => {
+      this.eventHandlers.recording_requested?.(data);
+    });
+
+    this.socket.on('recording_status_changed', (data) => {
+      this.eventHandlers.recording_status_changed?.(data);
+    });
+
     // Chat Events
     this.socket.on('chat_message', (data) => {
       this.eventHandlers.chat_message?.(data);
@@ -193,6 +201,18 @@ export class VideoConferenceWebSocket {
   stopRecording(conferenceId: string) {
     if (this.socket) {
       this.socket.emit('recording_stop', { conferenceId, userId: this.userId });
+    }
+  }
+
+  requestRecording(conferenceId: string) {
+    if (this.socket) {
+      this.socket.emit('request_recording', { conferenceId, userId: this.userId });
+    }
+  }
+
+  sendRecordingConsentResponse(conferenceId: string, participantId: string, consentGiven: boolean) {
+    if (this.socket) {
+      this.socket.emit('recording_consent_response', { conferenceId, participantId, consentGiven });
     }
   }
 

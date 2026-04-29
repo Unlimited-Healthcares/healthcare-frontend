@@ -165,6 +165,8 @@ export interface VideoConferenceWebSocketEvents {
   screen_share_stopped: (data: { conferenceId: string; participantId: string }) => void;
   recording_started: (data: { conferenceId: string; startedBy: string }) => void;
   recording_stopped: (data: { conferenceId: string; stoppedBy: string }) => void;
+  recording_requested: (data: { conferenceId: string; requesterName: string }) => void;
+  recording_status_changed: (data: { conferenceId: string; isRecording: boolean }) => void;
   chat_message: (data: { conferenceId: string; participantId: string; message: string; timestamp: string }) => void;
   hand_raised: (data: { conferenceId: string; participantId: string; isRaised: boolean }) => void;
 }

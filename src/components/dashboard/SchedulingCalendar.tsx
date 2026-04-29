@@ -55,37 +55,39 @@ export const SchedulingCalendar = () => {
 
     const renderHeader = () => {
         return (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Health Schedule</h2>
-                    <p className="text-slate-500 font-medium">Manage your appointments and medical reminders</p>
+                    <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">Health Schedule</h2>
+                    <p className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-widest mt-1">Registry of clinical temporal slots</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                        className="rounded-xl hover:bg-slate-50"
-                    >
-                        <ChevronLeft size={20} />
-                    </Button>
-                    <span className="text-sm font-bold text-slate-900 px-4 min-w-[140px] text-center">
-                        {format(currentMonth, 'MMMM yyyy')}
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                        className="rounded-xl hover:bg-slate-50"
-                    >
-                        <ChevronRight size={20} />
-                    </Button>
-                    <div className="w-[1px] h-6 bg-slate-100 mx-1" />
+                <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl shadow-premium border border-slate-100 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                            className="h-10 w-10 rounded-xl hover:bg-slate-50 flex-shrink-0"
+                        >
+                            <ChevronLeft size={18} />
+                        </Button>
+                        <span className="text-xs font-black text-slate-900 flex-1 text-center uppercase tracking-tighter min-w-[120px]">
+                            {format(currentMonth, 'MMMM yyyy')}
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                            className="h-10 w-10 rounded-xl hover:bg-slate-50 flex-shrink-0"
+                        >
+                            <ChevronRight size={18} />
+                        </Button>
+                    </div>
+                    <div className="hidden sm:block w-[1px] h-6 bg-slate-100 mx-1 flex-shrink-0" />
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setCurrentMonth(new Date())}
-                        className="text-[11px] font-bold text-blue-600 hover:bg-blue-50 px-3 rounded-lg"
+                        className="text-[10px] font-black text-blue-600 hover:bg-blue-50 px-4 h-10 rounded-xl flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0"
                     >
                         TODAY
                     </Button>

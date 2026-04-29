@@ -124,7 +124,13 @@ export const CreateVideoConferenceModal: React.FC<CreateVideoConferenceModalProp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <div
+        className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl w-full sm:max-w-2xl overflow-y-auto"
+        style={{
+          maxHeight: 'calc(100dvh - 80px)',   /* 80px = BottomTabs height on mobile */
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2 sm:gap-3">

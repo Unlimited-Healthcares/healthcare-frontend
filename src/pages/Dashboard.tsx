@@ -21,7 +21,7 @@ import { BiotechDashboard } from "@/components/dashboard/BiotechDashboard";
 import { CenterType } from "@/types/healthcare-centers";
 import { ProfileCompletionWidget } from "@/components/dashboard/ProfileCompletionWidget";
 import { SpecialtyServicesWidget } from "@/components/dashboard/SpecialtyServicesWidget";
-import { DollarSign, CheckCircle, AlertCircle, Clock, XCircle, ShieldCheck, Shield, Building } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, Clock, XCircle, ShieldCheck, Shield, Building, ListTodo, ClipboardList, ArrowRight, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -371,6 +371,54 @@ const DashboardHome = () => {
 
   const roleInfo = getRoleInfo();
 
+  const TaskShortcutBar = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
+      <Button
+        variant="outline"
+        onClick={() => navigate(primaryRole === 'patient' ? '/clinical/me?tab=adherence' : '/requests')}
+        className="h-16 rounded-2xl border-blue-100 bg-white hover:bg-blue-50 text-blue-700 shadow-sm flex items-center justify-between px-6 group transition-all"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-black uppercase tracking-tight">Review Tasks</p>
+            <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest opacity-70">Check ongoing care activities</p>
+          </div>
+        </div>
+        <ArrowRight className="h-5 w-5 opacity-30 group-hover:opacity-100 transition-opacity" />
+      </Button>
+
+      <Button
+        variant="outline"
+        onClick={() => {
+          // Trigger the 'Create Task' flow in QuickActions via state or global event if needed
+          // For now, we'll navigate to the discovery or appropriate creation tool
+          if (primaryRole === 'patient') {
+            navigate('/discovery?type=doctor');
+          } else {
+            // Providers usually create tasks for patients
+            navigate('/discovery?type=patient');
+          }
+          toast.info("Select a contact to initiate a task/communication");
+        }}
+        className="h-16 rounded-2xl border-indigo-100 bg-white hover:bg-indigo-50 text-indigo-700 shadow-sm flex items-center justify-between px-6 group transition-all"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-indigo-100 rounded-xl group-hover:bg-indigo-200 transition-colors">
+            <ListTodo className="h-6 w-6" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-black uppercase tracking-tight">Create Task</p>
+            <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-widest opacity-70">Initiate new care communication</p>
+          </div>
+        </div>
+        <Plus className="h-5 w-5 opacity-30 group-hover:opacity-100 transition-opacity" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="container mx-auto pb-32 sm:pb-12 max-w-full">
       <WelcomeHeader
@@ -379,6 +427,8 @@ const DashboardHome = () => {
         roleLabel={roleInfo.label}
         badgeColor={roleInfo.color}
       />
+
+      <TaskShortcutBar />
 
       {isProfessional && licenseInfo.status !== 'good' && (
         <div className={cn("mb-6 p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700 shadow-lg", licenseInfo.bg, licenseInfo.border)}>

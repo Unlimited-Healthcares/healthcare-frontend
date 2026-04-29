@@ -176,9 +176,9 @@ export class AppointmentService {
   }
 
   // Cancel appointment
-  async cancelAppointment(id: string, reason?: string, cancelledBy?: string): Promise<Appointment> {
+  async cancelAppointment(id: string, reason: string, cancelledBy?: string): Promise<Appointment> {
     const data = {
-      reason: reason || 'Appointment cancelled',
+      reason: reason,
       cancelledBy: cancelledBy || 'user'
     };
     return this.apiClient.patch<Appointment>(`/appointments/${id}/cancel`, data);

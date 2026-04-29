@@ -321,6 +321,42 @@ export const medicalRecordService = {
       console.error('Error getting patient consent status:', error);
       return null;
     }
+  },
+
+  /**
+   * Search for medical records
+   */
+  async searchRecords(params: { 
+    patientId?: string; 
+    workspaceId?: string; 
+    type?: string; 
+    search?: string; 
+    limit?: number;
+  }): Promise<{ records: any[] }> {
+    try {
+      const response = await apiClient.get('/medical-records/search', { params }) as any;
+      const records = response.data || response || [];
+      // Handle both cases: response is array or response has data property
+      return { 
+        records: Array.isArray(records) ? records : (records.data || []) 
+      };
+    } catch (error) {
+      console.error('Error searching medical records:', error);
+      return { records: [] };
+    }
+  },
+
+  /**
+   * Create a new medical record
+   */
+  async createRecord(data: any): Promise<any> {
+    try {
+      const response = await apiClient.post('/medical-records', data) as any;
+      return response.data || response;
+    } catch (error) {
+      console.error('Error creating medical record:', error);
+      throw error;
+    }
   }
 };
 

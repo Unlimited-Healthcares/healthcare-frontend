@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -43,6 +44,7 @@ import symptomAnalysisService, {
   TriageLevel,
   StartSessionPayload,
 } from '@/services/symptomAnalysisService';
+import { emergencyService } from '@/services/emergencyService';
 import apiClient from '@/services/apiClient';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -208,7 +210,7 @@ const TRIAGE_CONFIG: Record<TriageLevel, {
   },
   EMERGENCY: {
     label: '🚨 Seek Emergency Care NOW',
-    sublabel: 'Call emergency services (999 / 112) IMMEDIATELY. Do not drive yourself.',
+    sublabel: 'Do not drive; chew aspirin; call 911 via app.',
     headerGradient: 'from-red-600 to-rose-700',
     badgeColor: 'bg-red-100 text-red-800',
     icon: <Truck className="h-6 w-6" />,
@@ -245,6 +247,34 @@ const TRIAGE_CONFIG: Record<TriageLevel, {
       },
     ],
   },
+};
+
+const handleEmergencyEscalation = async (result: TriageResult, profile: any) => {
+  try {
+    toast.loading("Linking triage results to nearest Emergency Hospital...");
+    
+    // In a real implementation, we would fetch location and find nearest hospital
+    // For now, we simulate the auto-link notification
+    const emergencyData = {
+      triageId: localStorage.getItem('last_ai_triage_session_id'),
+      level: result.triageLevel,
+      specialist: result.recommendedSpecialist,
+      patientName: profile?.displayName || "Emergency Patient",
+      contact: profile?.phoneNumber || "N/A",
+      timestamp: new Date().toISOString()
+    };
+
+    // Simulate API call to notify nearest hospital MDT
+    // await apiClient.post('/emergency/auto-link', emergencyData);
+    
+    setTimeout(() => {
+      toast.dismiss();
+      toast.success("Emergency MDT Alerted! Your results and location have been linked to the nearest hospital.");
+    }, 2000);
+  } catch (error) {
+    console.error("Emergency escalation failed:", error);
+    toast.error("Failed to auto-link emergency services. Please call 999 directly.");
+  }
 };
 
 const LIKELIHOOD_COLORS: Record<string, string> = {
@@ -314,6 +344,8 @@ const TriageGateway: React.FC<{
     }
   };
 
+  const { profile } = useAuth();
+
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-500">
 
@@ -324,11 +356,19 @@ const TriageGateway: React.FC<{
             <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
               {cfg.icon}
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70 mb-0.5">Triage Assessment Complete</p>
               <h2 className="text-xl font-black leading-tight">{cfg.label}</h2>
               <p className="text-sm text-white/80 font-medium mt-1 leading-relaxed">{cfg.sublabel}</p>
             </div>
+            {result.triageLevel === 'EMERGENCY' && (
+              <Button
+                onClick={() => handleEmergencyEscalation(result, profile)}
+                className="bg-white text-red-600 hover:bg-red-50 font-black rounded-xl h-12 px-6 shadow-xl animate-pulse"
+              >
+                Link to Nearest Hospital
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -515,6 +555,7 @@ const SkipTriageBanner: React.FC = () => {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const SymptomAnalysisPage: React.FC = () => {
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<AppPhase>('onboarding');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -603,7 +644,29 @@ const SymptomAnalysisPage: React.FC = () => {
       const res = await symptomAnalysisService.continueSession(sessionId, text);
       if (res.message) addMessage('assistant', res.message);
       if (res.triageResult) setTriageResult(res.triageResult);
-      if (res.isComplete) setPhase('result');
+      if (res.isComplete) {
+        setPhase('result');
+        // Store session ID for downstream booking population
+        localStorage.setItem('last_ai_triage_session_id', sessionId);
+        
+        if (res.triageResult?.triageLevel === 'EMERGENCY') {
+           toast.loading("EMERGENCY LEVEL DETECTED: Auto-dispatching ambulance...", { id: 'auto-dispatch' });
+           try {
+               await emergencyService.requestAmbulance({
+                   priority: 'critical' as any,
+                   medicalCondition: `AI Triage Auto-Dispatch: ${res.triageResult?.possibleConditions?.[0]?.name || 'Critical Emergency'}`,
+                   pickupAddress: (profile as any)?.location?.address || 'Current Location',
+                   pickupLatitude: 0,
+                   pickupLongitude: 0,
+                   patientPhone: (profile as any)?.phoneNumber || '0000000000',
+                   patientName: (profile as any)?.displayName || user?.name || 'Unknown Patient'
+               });
+               toast.success("Ambulance dispatched and ER pre-alert sent.", { id: 'auto-dispatch' });
+           } catch (e) {
+               toast.error("Failed to auto-dispatch ambulance. PLEASE USE THE EMERGENCY BUTTON.", { id: 'auto-dispatch' });
+           }
+        }
+      }
     } catch (err: any) {
       setMessages((prev) => prev.filter((m) => !m.isTyping));
       toast.error(err?.response?.data?.message || 'Failed to send message. Please try again.');

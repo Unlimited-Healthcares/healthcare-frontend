@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
     Activity,
@@ -22,8 +23,10 @@ import { AdherenceTracker } from '@/components/clinical/AdherenceTracker';
 import { TestStatusTracker } from '@/components/clinical/TestStatusTracker';
 import { usePrescriptions, useEncounters } from '@/hooks/useClinical';
 import { useAuth } from '@/hooks/useAuth';
+import { PharmacyPayloadModal } from '@/components/clinical/PharmacyPayloadModal';
 
 export default function PatientClinicalDashboard() {
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTab = searchParams.get('tab') || 'adherence';
     const [activeTab, setActiveTab] = useState(initialTab);
@@ -31,6 +34,9 @@ export default function PatientClinicalDashboard() {
     const { user } = useAuth();
     const { data: prescriptionsRes } = usePrescriptions();
     const { data: encountersRes } = useEncounters();
+    const [isPayloadOpen, setIsPayloadOpen] = useState(false);
+
+    const prescriptions = prescriptionsRes?.data || [];
 
     useEffect(() => {
         const tab = searchParams.get('tab');
@@ -149,7 +155,11 @@ export default function PatientClinicalDashboard() {
                                         </div>
                                         <h3 className="text-2xl font-black text-slate-900 mb-2">Prescription Vault</h3>
                                         <p className="text-slate-500 font-medium italic mb-8">View active and archived medication orders digitally signed by your providers.</p>
-                                        <Button variant="ghost" className="p-0 h-auto font-black text-indigo-600 hover:text-indigo-700 hover:bg-transparent flex items-center gap-2">
+                                        <Button 
+                                            variant="ghost" 
+                                            onClick={() => setIsPayloadOpen(true)}
+                                            className="p-0 h-auto font-black text-indigo-600 hover:text-indigo-700 hover:bg-transparent flex items-center gap-2"
+                                        >
                                             Access Pharmacy Payload <ChevronRight className="h-5 w-5" />
                                         </Button>
                                     </CardContent>
@@ -161,7 +171,14 @@ export default function PatientClinicalDashboard() {
                                         </div>
                                         <h3 className="text-2xl font-black text-slate-900 mb-2">Discharge Summary</h3>
                                         <p className="text-slate-500 font-medium italic mb-8">Receive and store your professional discharge packages and recovery summaries.</p>
-                                        <Button variant="ghost" className="p-0 h-auto font-black text-indigo-600 hover:text-indigo-700 hover:bg-transparent flex items-center gap-2">
+                                        <Button 
+                                            variant="ghost" 
+                                            onClick={() => {
+                                                navigate('/records');
+                                                toast.success('Navigating to Clinical Records for download...');
+                                            }}
+                                            className="p-0 h-auto font-black text-indigo-600 hover:text-indigo-700 hover:bg-transparent flex items-center gap-2"
+                                        >
                                             Download Summary Package <ChevronRight className="h-5 w-5" />
                                         </Button>
                                     </CardContent>
@@ -187,6 +204,12 @@ export default function PatientClinicalDashboard() {
                     </Button>
                 </div>
             </div>
+            
+            <PharmacyPayloadModal 
+                isOpen={isPayloadOpen}
+                onClose={() => setIsPayloadOpen(false)}
+                prescriptions={prescriptions}
+            />
         </DashboardLayout>
     );
 }

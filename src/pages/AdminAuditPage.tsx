@@ -25,6 +25,9 @@ import {
     TableRow 
 } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
+import { hasPermission } from '@/lib/permissions';
+import { Navigate } from 'react-router-dom';
 
 interface AuditLog {
     id: string;
@@ -40,9 +43,14 @@ interface AuditLog {
 
 const AdminAuditPage: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [search, setSearch] = useState('');
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
+
+    if (!hasPermission(user?.roles, 'canViewAdminAuditLogs')) {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     useEffect(() => {
         // Simulated audit logs

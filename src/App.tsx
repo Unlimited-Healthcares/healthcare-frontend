@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useIdleTimer } from '@/hooks/useIdleTimer'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
@@ -73,6 +74,7 @@ const MedicalVolunteerVerificationPage = lazy(() => import('@/pages/MedicalVolun
 const ConnectionsPage = lazy(() => import('@/pages/ConnectionsPage'))
 const ClinicalWorkflow = lazy(() => import('@/pages/ClinicalWorkflow'))
 const PatientClinicalDashboard = lazy(() => import('@/pages/PatientClinicalDashboard'))
+const CaseWorkspacePage = lazy(() => import('@/pages/CaseWorkspacePage'))
 
 const ONBOARDING_KEY = 'uhc_onboarding_complete'
 
@@ -80,6 +82,7 @@ function App() {
   const { isAuthenticated, user, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  useIdleTimer(5 * 60 * 1000) // 5 minutes session timeout
   const lastBackPress = useRef<number>(0);
 
   // Dismiss all hot toasts on route change
@@ -692,6 +695,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <PatientClinicalDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clinical/workspace/:id"
+            element={
+              <ProtectedRoute>
+                <CaseWorkspacePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/clinical/teleconsult/:id"
+            element={
+              <ProtectedRoute>
+                <TeleconsultPage />
               </ProtectedRoute>
             }
           />

@@ -113,6 +113,7 @@ export interface MedicalHistory {
   conditions: string[]
   surgeries: string[]
   familyHistory: string[]
+  bloodType?: string
 }
 
 export interface UserPreferences {

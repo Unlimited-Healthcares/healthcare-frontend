@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { hasPermission } from '@/lib/permissions';
 import { discoveryService } from '@/services/discoveryService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -433,12 +434,21 @@ const PatientsPage: React.FC = () => {
                       </div>
 
                       <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-slate-50 dark:border-slate-800">
-                        <Button
-                          onClick={() => handleViewDetails(patient)}
-                          className="w-full sm:flex-1 rounded-2xl h-14 bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 dark:shadow-none"
-                        >
-                          Clinical Record
-                        </Button>
+                          {hasPermission(user?.roles, 'canViewClinicalNotes') ? (
+                            <Button
+                              onClick={() => handleViewDetails(patient)}
+                              className="w-full sm:flex-1 rounded-2xl h-14 bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 dark:shadow-none"
+                            >
+                              Clinical Record
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => handleViewDetails(patient)}
+                              className="w-full sm:flex-1 rounded-2xl h-14 bg-slate-100 dark:bg-slate-800 text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] transition-all"
+                            >
+                              View Summary
+                            </Button>
+                          )}
                         <Button
                           variant="outline"
                           size="icon"

@@ -54,7 +54,9 @@ export class ApiClient {
 
           if (!this.refreshPromise) {
             this.refreshPromise = (async () => {
-              const refreshToken = localStorage.getItem('refreshToken');
+              const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+              const activeStorage = localStorage.getItem('refreshToken') ? localStorage : sessionStorage;
+              
               if (!refreshToken) return null;
 
               try {
@@ -73,8 +75,8 @@ export class ApiClient {
 
                   if (newToken) {
                     this.setAuthToken(newToken);
-                    localStorage.setItem('authToken', newToken);
-                    if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+                    activeStorage.setItem('authToken', newToken);
+                    if (newRefreshToken) activeStorage.setItem('refreshToken', newRefreshToken);
                     return newToken;
                   }
                 }

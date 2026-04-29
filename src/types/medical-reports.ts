@@ -3,7 +3,7 @@ export interface MedicalReport {
   id: string;
   patientId: string;
   patientName: string;
-  reportType: 'general' | 'lab' | 'radiology' | 'surgical' | 'consultation' | 'specialist' | 'emergency';
+  reportType: 'general' | 'lab' | 'radiology' | 'surgical' | 'consultation' | 'specialist' | 'emergency' | 'psychiatric';
   title: string;
   diagnosis: string;
   treatment?: string;

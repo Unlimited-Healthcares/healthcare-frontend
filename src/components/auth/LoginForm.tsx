@@ -26,6 +26,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassw
   const [isBiometricPromptVisible, setIsBiometricPromptVisible] = useState(false)
   const { signIn, loading, authError, clearAuthError } = useAuth()
   const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
 
   React.useEffect(() => {
     const checkBiometric = async () => {
@@ -74,7 +75,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassw
   const onSubmit = async (data: LoginFormData) => {
     try {
       clearAuthError()
-      await signIn(data.email, data.password)
+      await signIn(data.email, data.password, rememberMe)
 
       // ALways store credentials in the secure vault on native platforms when login succeeds
       // so if they enable biometric later from settings, the credentials are ALREADY preserved.
@@ -113,6 +114,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassw
             {...register('email')}
             type="email"
             id="email"
+            autoComplete="email"
             className={`input-field ${errors.email ? 'border-red-500' : ''}`}
             placeholder="Enter your email"
           />
@@ -131,6 +133,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassw
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
               id="password"
+              autoComplete="current-password"
               className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
               placeholder="Enter your password"
             />
@@ -149,6 +152,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassw
           {errors.password && (
             <p className="text-[10px] uppercase font-bold text-red-500 mt-1">{errors.password.message}</p>
           )}
+        </div>
+
+        {/* Remember Me Toggle */}
+        <div className="flex items-center space-x-2 px-1">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="rememberMe" className="text-[10px] font-black uppercase tracking-widest text-gray-400 cursor-pointer">
+            Remember me on this device
+          </label>
         </div>
 
         {/* Error Display */}

@@ -35,7 +35,7 @@ type AuthContextType = {
   userPreferences: UserPreferences;
   loading: boolean;
   profileLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string, userData?: object) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
@@ -389,8 +389,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // console.log('🔐 Starting session refresh...');
       setRefreshInProgress(true);
 
-      // Check if we have a stored refresh token
-      const storedRefreshToken = localStorage.getItem('refreshToken');
+      // Check if we have a stored refresh token in either storage
+      const storedRefreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+      const activeStorage = localStorage.getItem('refreshToken') ? localStorage : sessionStorage;
+      
       if (!storedRefreshToken) {
         // console.log('🔐 No refresh token found, cannot refresh session');
         return;
@@ -421,13 +423,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data && isMountedRef.current) {
         // console.log('🔐 Refresh successful, updating tokens and user data');
 
-        // Update the stored tokens with the new ones
+        // Update the stored tokens with the new ones in the active storage
         if (data.access_token) {
-          localStorage.setItem('authToken', data.access_token);
+          activeStorage.setItem('authToken', data.access_token);
           apiClient.setAuthToken(data.access_token);
         }
         if (data.refresh_token) {
-          localStorage.setItem('refreshToken', data.refresh_token);
+          activeStorage.setItem('refreshToken', data.refresh_token);
         }
 
         // Update session state
@@ -440,12 +442,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.user) {
           // console.log('🧭 Navbar Source: refresh data.user:', data.user);
           setUser(data.user);
-          localStorage.setItem('authUser', JSON.stringify(data.user));
+          activeStorage.setItem('authUser', JSON.stringify(data.user));
         }
         if (data.profile) {
           // console.log('🧭 Navbar Source: refresh data.profile:', data.profile);
           setProfile(data.profile);
-          localStorage.setItem('authProfile', JSON.stringify(data.profile));
+          activeStorage.setItem('authProfile', JSON.stringify(data.profile));
         }
 
         // Clear any auth errors
@@ -459,11 +461,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(null);
         setUser(null);
         setProfile(null);
-        // Clear invalid tokens
+        // Clear invalid tokens from both
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('authUser');
         localStorage.removeItem('authProfile');
+        
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('authUser');
+        sessionStorage.removeItem('authProfile');
+        
         apiClient.clearAuthToken();
       }
       throw error;
@@ -509,9 +517,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check for stored token and get user profile
     const initializeAuth = async () => {
       try {
-        // Check if we have stored tokens
-        const storedToken = localStorage.getItem('authToken');
-        const storedRefreshToken = localStorage.getItem('refreshToken');
+        // Check if we have stored tokens in either storage
+        const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const storedRefreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
 
         // Case 1: We have an access token – try to authenticate immediately
         if (storedToken) {
@@ -633,7 +641,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [refreshSession]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
     try {
       setLoading(true);
       setAuthError(null);
@@ -657,9 +666,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        localStorage.setItem('authToken', payload.access_token);
+        storage.setItem('authToken', payload.access_token);
         if (payload.refresh_token) {
-          localStorage.setItem('refreshToken', payload.refresh_token);
+          storage.setItem('refreshToken', payload.refresh_token);
         }
         apiClient.setAuthToken(payload.access_token);
 
@@ -675,8 +684,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(payload.user || null);
         setProfile(payload.profile || null);
 
-        if (payload.user) localStorage.setItem('authUser', JSON.stringify(payload.user));
-        if (payload.profile) localStorage.setItem('authProfile', JSON.stringify(payload.profile));
+        if (payload.user) storage.setItem('authUser', JSON.stringify(payload.user));
+        if (payload.profile) storage.setItem('authProfile', JSON.stringify(payload.profile));
 
         // Login response does not include full profile; fetch /auth/me so profile completion gate has correct data
         let hasProfileFromMe = false;
@@ -691,8 +700,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const roles = Array.isArray(fullUser?.roles) ? fullUser.roles : (fullUser?.role ? [fullUser.role] : []);
             setUser({ ...(fullUser as any), roles } as any);
             setProfile((fullProfile as Profile) || null);
-            if (fullUser) localStorage.setItem('authUser', JSON.stringify({ ...fullUser, roles }));
-            if (fullProfile) localStorage.setItem('authProfile', JSON.stringify(fullProfile));
+            if (fullUser) storage.setItem('authUser', JSON.stringify({ ...fullUser, roles }));
+            if (fullProfile) storage.setItem('authProfile', JSON.stringify(fullProfile));
           }
         } catch (_) {
           // Non-fatal: keep login state; profile gate may redirect to /profile until /auth/me is loaded elsewhere
@@ -720,7 +729,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
           // console.log('🔐 Setting fallback profile:', basicProfile);
           setProfile(basicProfile);
-          localStorage.setItem('authProfile', JSON.stringify(basicProfile));
+          storage.setItem('authProfile', JSON.stringify(basicProfile));
         }
 
         // console.log('🧭 Navbar Source: after login setUser:', payload.user);
@@ -777,11 +786,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.warn('Server-side sign out failed:', err);
       });
 
-      // Always clear local state regardless of API success
+      // Always clear local and session state regardless of API success
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('authUser');
       localStorage.removeItem('authProfile');
+      
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('authUser');
+      sessionStorage.removeItem('authProfile');
+      
       apiClient.clearAuthToken();
 
       setUser(null);

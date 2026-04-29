@@ -47,5 +47,19 @@ export const complianceApi = {
   getUserActivity: async () => {
     const response = await apiClient.get<UserActivityResponse>('/compliance/activity');
     return response.data;
+  },
+
+  logAction: async (action: string, entityType: string, details: Record<string, any> = {}) => {
+    try {
+      const response = await apiClient.post('/compliance/log', {
+        action,
+        entityType,
+        details,
+        timestamp: new Date().toISOString()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to log compliance action:', error);
+    }
   }
 };

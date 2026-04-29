@@ -35,6 +35,7 @@ import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { useNavigate } from 'react-router-dom';
 import { medicalReportsService } from '@/services/medicalReportsService';
 import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
+import { ServiceManagement } from './ServiceManagement';
 
 import { discoveryService } from '@/services/discoveryService';
 
@@ -258,6 +259,7 @@ export function BiotechDashboard() {
                     <TabsTrigger value="work-orders" className="rounded-lg px-6">Work Orders</TabsTrigger>
                     <TabsTrigger value="fleet" className="rounded-lg px-6">Equipment Fleet</TabsTrigger>
                     <TabsTrigger value="logs" className="rounded-lg px-6">Technical Logs</TabsTrigger>
+                    <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
                     <TabsTrigger value="settings" className="rounded-lg px-6">Configuration</TabsTrigger>
                 </TabsList>
 
@@ -364,6 +366,14 @@ export function BiotechDashboard() {
                         <h3 className="text-lg font-bold text-gray-600">No recent result logs</h3>
                         <p className="text-sm text-gray-400">Records of completed analyses will appear here.</p>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="services">
+                    <ServiceManagement
+                        userId={user?.id}
+                        centerId={(profile as any)?.centerId}
+                        centerType={(profile as any)?.centerType || 'biotech'}
+                    />
                 </TabsContent>
 
                 <TabsContent value="settings">

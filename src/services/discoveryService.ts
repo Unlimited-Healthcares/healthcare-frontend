@@ -24,7 +24,7 @@ class DiscoveryService {
     const queryString = new URLSearchParams();
 
     // Only include parameters that are supported by the backend SearchUsersDto
-    const validParams = ['type', 'specialty', 'city', 'state', 'country', 'service', 'search', 'page', 'limit'];
+    const validParams = ['type', 'specialty', 'city', 'state', 'country', 'service', 'search', 'page', 'limit', 'minPrice', 'maxPrice'];
 
     Object.entries(params).forEach(([key, value]) => {
       if (validParams.includes(key) && value !== undefined && value !== null && value !== '') {
@@ -178,7 +178,7 @@ class DiscoveryService {
     const queryString = new URLSearchParams();
 
     // Only include parameters that are supported by the backend
-    const validParams = ['type', 'city', 'state', 'country', 'service', 'acceptingNewPatients', 'page', 'limit'];
+    const validParams = ['type', 'city', 'state', 'country', 'service', 'acceptingNewPatients', 'page', 'limit', 'minPrice', 'maxPrice'];
 
     Object.entries(params).forEach(([key, value]) => {
       if (validParams.includes(key) && value !== undefined && value !== null && value !== '') {

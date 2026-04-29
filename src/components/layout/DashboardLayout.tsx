@@ -77,7 +77,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <Navbar onToggleSidebar={toggleSidebar} isMobile={isMobile} />
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-gray-50 w-full overflow-y-auto pb-40 md:pb-12 safe-area-pb scrolling-touch">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-gray-50 w-full overflow-y-auto overflow-x-hidden pb-44 md:pb-12 safe-area-pb" style={{WebkitOverflowScrolling: 'touch'}}>
           {children}
         </main>
       </div>

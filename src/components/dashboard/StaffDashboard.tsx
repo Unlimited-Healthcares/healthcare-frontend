@@ -25,6 +25,7 @@ import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { discoveryService } from '@/services/discoveryService';
 import { appointmentService } from '@/services/appointmentService';
+import { ServiceManagement } from './ServiceManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -321,6 +322,7 @@ export function HospitalRegistryDashboard({ centerName = 'Hospital' }: { centerN
                     <TabsTrigger value="tasks" className="rounded-lg px-6 font-bold">Registry Console</TabsTrigger>
                     <TabsTrigger value="appointments" className="rounded-lg px-6 font-bold">Clinical Schedule</TabsTrigger>
                     <TabsTrigger value="patients" className="rounded-lg px-6 font-bold">Master Patient Index</TabsTrigger>
+                    <TabsTrigger value="services" className="rounded-lg px-6 font-bold">Services</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tasks" className="space-y-4">
@@ -345,6 +347,13 @@ export function HospitalRegistryDashboard({ centerName = 'Hospital' }: { centerN
 
                 <TabsContent value="patients">
                     <PatientList />
+                </TabsContent>
+
+                <TabsContent value="services">
+                    <ServiceManagement
+                        centerId={(user as any)?.centerId || (user as any)?.metadata?.centerId}
+                        centerType="hospital"
+                    />
                 </TabsContent>
             </Tabs>
         </div>

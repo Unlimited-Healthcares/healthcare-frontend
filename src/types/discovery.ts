@@ -151,6 +151,8 @@ export interface SearchParams {
   // They are kept for frontend UI state management but filtered out in API calls
   experience?: number;
   availability?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface CenterSearchParams {
@@ -164,6 +166,8 @@ export interface CenterSearchParams {
   acceptingNewPatients?: boolean;
   page?: number;
   limit?: number;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface Request {

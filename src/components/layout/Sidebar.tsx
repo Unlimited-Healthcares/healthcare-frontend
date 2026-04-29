@@ -87,8 +87,8 @@ const getDiscoveryNavigation = (userRoles: string[] | undefined) => {
     { name: "Find Practitioners", href: "/discovery", icon: Search, iconColor: "text-violet-600" },
     { name: "Find Centers", href: "/centers", icon: Building2, iconColor: "text-amber-600" },
     { name: "My Connections", href: "/connections", icon: Users, iconColor: "text-blue-600" },
-    { name: "Requests", href: "/requests", icon: Inbox, iconColor: "text-teal-600" },
-    { name: "Invitations", href: "/invitations", icon: Mail, iconColor: "text-pink-500" },
+    { name: "Collaboration Requests", href: "/requests", icon: Inbox, iconColor: "text-teal-600" },
+    { name: "Service Invitations", href: "/invitations", icon: Mail, iconColor: "text-pink-500" },
   ];
 
   // Filter for fitness center specific discovery
@@ -105,7 +105,7 @@ const getDiscoveryNavigation = (userRoles: string[] | undefined) => {
     return [
       { name: "Find Centers", href: "/centers", icon: Building2, iconColor: "text-amber-600" },
       { name: "My Connections", href: "/connections", icon: Users, iconColor: "text-blue-600" },
-      { name: "Requests", href: "/requests", icon: Inbox, iconColor: "text-teal-600" },
+      { name: "Collaboration Requests", href: "/requests", icon: Inbox, iconColor: "text-teal-600" },
       { name: "My Registry", href: "/center/patients", icon: Users, iconColor: "text-indigo-600" },
     ];
   }

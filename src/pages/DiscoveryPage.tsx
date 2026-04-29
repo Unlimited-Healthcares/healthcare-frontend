@@ -51,7 +51,9 @@ const DiscoveryPage: React.FC = () => {
     page: 1,
     limit: 20,
     experience: 0,
-    availability: false
+    availability: false,
+    minPrice: undefined,
+    maxPrice: undefined
   });
 
   const [results, setResults] = useState<(User | Center)[]>([]);
@@ -146,7 +148,9 @@ const DiscoveryPage: React.FC = () => {
           country: params.country,
           service: params.service,
           page: params.page,
-          limit: params.limit
+          limit: params.limit,
+          minPrice: params.minPrice,
+          maxPrice: params.maxPrice
         });
         responseData = { results: response.centers, totalPages: response.totalPages };
       } else {
@@ -644,7 +648,9 @@ const DiscoveryPage: React.FC = () => {
                         page: 1,
                         limit: 20,
                         experience: 0,
-                        availability: false
+                        availability: false,
+                        minPrice: undefined,
+                        maxPrice: undefined
                       });
                       setShowFilterDrawer(false);
                     }}

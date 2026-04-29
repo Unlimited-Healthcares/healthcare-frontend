@@ -74,7 +74,7 @@ export const EmergencyQuickActions: React.FC<{
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* SOS Alert Button */}
+        {/* Emergency Alert Button */}
         <button
           onClick={onSOSAlert}
           className="group relative overflow-hidden bg-red-600 hover:bg-red-700 text-white p-4 sm:p-5 md:p-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
@@ -84,8 +84,8 @@ export const EmergencyQuickActions: React.FC<{
               <AlertTriangle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
             </div>
             <div className="text-left min-w-0">
-              <h3 className="text-base sm:text-lg md:text-xl font-bold truncate">Send SOS Alert</h3>
-              <p className="text-red-100 text-xs sm:text-sm truncate">Emergency assistance needed</p>
+              <h3 className="text-base sm:text-lg md:text-xl font-bold truncate">Initiate ER MDT Emergency</h3>
+              <p className="text-red-100 text-xs sm:text-sm truncate">Notify ER Doctors & MDT team</p>
             </div>
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>

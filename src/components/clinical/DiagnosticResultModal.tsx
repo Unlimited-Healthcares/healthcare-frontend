@@ -67,6 +67,14 @@ export const DiagnosticResultModal = ({
     const [imageLink, setImageLink] = useState('');
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
+    // Image Acquisition Logs
+    const [acquisitionLogs, setAcquisitionLogs] = useState({
+        examType: '',
+        technique: '',
+        contrastUsed: 'None',
+        acquisitionStatus: 'completed'
+    });
+
     // Auto-populate from order if provided
     useEffect(() => {
         if (isOpen && pendingOrder) {
@@ -108,7 +116,8 @@ export const DiagnosticResultModal = ({
                     verificationHash: Math.random().toString(36).substring(2, 12).toUpperCase(),
                     archivedAt: new Date().toISOString(),
                     imageLink,
-                    hasAttachedImages: attachedFiles.length > 0
+                    hasAttachedImages: attachedFiles.length > 0,
+                    acquisitionLogs
                 }
             };
 
@@ -137,6 +146,12 @@ export const DiagnosticResultModal = ({
         });
         setImageLink('');
         setAttachedFiles([]);
+        setAcquisitionLogs({
+            examType: '',
+            technique: '',
+            contrastUsed: 'None',
+            acquisitionStatus: 'completed'
+        });
         onClose();
     };
 
@@ -310,13 +325,58 @@ export const DiagnosticResultModal = ({
                                     />
                                 </div>
 
-                                {/* Imaging Section */}
+                                {/* Imaging Section & Acquisition Logs */}
                                 <div className="p-8 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 space-y-6">
                                     <div className="flex items-center justify-between">
                                         <Label className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
                                             <ImageIcon className="h-4 w-4" /> Radiology Imaging & PACS
                                         </Label>
                                         <Badge variant="outline" className="text-[8px] border-indigo-200 text-indigo-600 font-black uppercase">JPEG, PNG, DICOM</Badge>
+                                    </div>
+
+                                    <div className="p-4 bg-white rounded-2xl border border-indigo-50 space-y-4">
+                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-indigo-50 pb-2">Image Acquisition Logs</h5>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] uppercase">Exam Type (e.g. CT, X-ray)</Label>
+                                                <Input
+                                                    className="h-10 text-xs"
+                                                    value={acquisitionLogs.examType}
+                                                    onChange={e => setAcquisitionLogs({ ...acquisitionLogs, examType: e.target.value })}
+                                                    placeholder="e.g. Chest X-Ray"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] uppercase">Technique / Protocol</Label>
+                                                <Input
+                                                    className="h-10 text-xs"
+                                                    value={acquisitionLogs.technique}
+                                                    onChange={e => setAcquisitionLogs({ ...acquisitionLogs, technique: e.target.value })}
+                                                    placeholder="e.g. PA and Lateral"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] uppercase">Contrast Used</Label>
+                                                <Input
+                                                    className="h-10 text-xs"
+                                                    value={acquisitionLogs.contrastUsed}
+                                                    onChange={e => setAcquisitionLogs({ ...acquisitionLogs, contrastUsed: e.target.value })}
+                                                    placeholder="e.g. None"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] uppercase">Acquisition Status</Label>
+                                                <select
+                                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors"
+                                                    value={acquisitionLogs.acquisitionStatus}
+                                                    onChange={e => setAcquisitionLogs({ ...acquisitionLogs, acquisitionStatus: e.target.value })}
+                                                >
+                                                    <option value="started">Started</option>
+                                                    <option value="processing">Processing</option>
+                                                    <option value="completed">Completed</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4">
@@ -353,6 +413,18 @@ export const DiagnosticResultModal = ({
                             </div>
 
                             <div className="flex gap-4">
+                                <Button variant="outline" className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest border-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 border-indigo-100" onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('open-video-call', {
+                                        detail: { room: `consult-${pendingOrder?.id || 'new'}`, type: 'radiology_consult' }
+                                    }));
+                                }}>
+                                    <Activity className="h-5 w-5 mr-2" /> Live Consult
+                                </Button>
+                                <Button variant="outline" className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest border-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700 border-rose-100" onClick={() => {
+                                    toast.success("Case marked for Specialist Referral");
+                                }}>
+                                    <ArrowRight className="h-5 w-5 mr-2" /> Refer Case
+                                </Button>
                                 <Button variant="outline" className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest" onClick={() => setStep(1)}>Back</Button>
                                 <Button
                                     className="flex-[2] h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-lg transition-all uppercase tracking-widest"
@@ -474,7 +546,7 @@ export const DiagnosticResultModal = ({
                                     className="flex-1 h-14 bg-slate-900 hover:bg-black text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 uppercase tracking-widest"
                                     onClick={() => window.print()}
                                 >
-                                    <Printer className="h-5 w-5" /> Print Result PDF
+                                    <Printer className="h-5 w-5" /> Print Report / Receipt
                                 </Button>
                                 <Button
                                     className="flex-1 h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black shadow-xl shadow-teal-100 transition-all uppercase tracking-widest"

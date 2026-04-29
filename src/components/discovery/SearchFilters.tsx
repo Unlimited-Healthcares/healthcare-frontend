@@ -39,6 +39,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
     if (params.service) count++;
     if (params.experience && params.experience > 0) count++;
     if (params.availability) count++;
+    if (params.minPrice) count++;
+    if (params.maxPrice) count++;
     setActiveFilters(count);
   }, [params]);
 
@@ -59,7 +61,9 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       page: 1,
       limit: 20,
       experience: 0,
-      availability: false
+      availability: false,
+      minPrice: undefined,
+      maxPrice: undefined
     });
   };
 
@@ -282,6 +286,29 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
                   </div>
                 </div>
               )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="min-price">Min Price</Label>
+                  <Input
+                    id="min-price"
+                    type="number"
+                    placeholder="Min"
+                    value={params.minPrice || ''}
+                    onChange={(e) => handleParamChange('minPrice', e.target.value ? Number(e.target.value) : undefined)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max-price">Max Price</Label>
+                  <Input
+                    id="max-price"
+                    type="number"
+                    placeholder="Max"
+                    value={params.maxPrice || ''}
+                    onChange={(e) => handleParamChange('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
+                  />
+                </div>
+              </div>
             </div>
 
             {params.type !== 'center' && (
@@ -509,6 +536,24 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label>Price Range</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Min Price"
+                      value={params.minPrice || ''}
+                      onChange={(e) => handleParamChange('minPrice', e.target.value ? Number(e.target.value) : undefined)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Max Price"
+                      value={params.maxPrice || ''}
+                      onChange={(e) => handleParamChange('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
+                    />
+                  </div>
+                </div>
               </div>
 
               {params.type !== 'center' && (

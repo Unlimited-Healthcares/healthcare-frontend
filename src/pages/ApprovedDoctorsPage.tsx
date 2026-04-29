@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  Calendar, 
+import {
+  User,
+  Phone,
+  Mail,
+  Calendar,
   Star,
   MessageCircle,
   ArrowLeft,
@@ -70,11 +70,11 @@ const ApprovedDoctorsPage: React.FC = () => {
     .filter(doctorProvider => {
       const doctor = doctorProvider.provider;
       if (!doctor) return false;
-      
+
       const searchLower = searchTerm.toLowerCase();
       const fullName = `${doctor.profile.firstName} ${doctor.profile.lastName}`.toLowerCase();
       const specialization = (doctor.profile.specialization || '').toLowerCase();
-      
+
       return fullName.includes(searchLower) || specialization.includes(searchLower);
     })
     .sort((a, b) => {
@@ -129,15 +129,15 @@ const ApprovedDoctorsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={handleBack}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">My Approved Doctors</h1>
@@ -215,8 +215,8 @@ const ApprovedDoctorsPage: React.FC = () => {
               if (!doctor) return null;
 
               return (
-                <Card 
-                  key={doctorProvider.id} 
+                <Card
+                  key={doctorProvider.id}
                   className="hover:shadow-lg transition-shadow"
                 >
                   <CardHeader className="pb-3">
@@ -235,7 +235,7 @@ const ApprovedDoctorsPage: React.FC = () => {
                                 const firstName = doctor.profile.firstName;
                                 const lastName = doctor.profile.lastName;
                                 const email = doctor.email;
-                                
+
                                 if (firstName && lastName) {
                                   return `${firstName.charAt(0)}${lastName.charAt(0)}`;
                                 } else if (firstName) {
@@ -262,7 +262,7 @@ const ApprovedDoctorsPage: React.FC = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     {/* Status Badge */}
                     <div className="flex items-center justify-between">
@@ -306,8 +306,8 @@ const ApprovedDoctorsPage: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="w-full"
                         onClick={() => handleBookAppointment(doctor.id)}
                       >
@@ -315,18 +315,18 @@ const ApprovedDoctorsPage: React.FC = () => {
                         Book Appointment
                       </Button>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="flex-1"
                           onClick={() => handleSendMessage(doctor.id)}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />
                           Message
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="flex-1"
                           onClick={() => handleViewProfile(doctor.publicId || doctor.id)}
                         >

@@ -380,6 +380,9 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
             case 'Request Appointment':
             case 'Book a Surgery':
             case 'Diagnostics':
+            case 'Diagnostic & Test Requests':
+            case 'MEDICAL REQUEST':
+            case 'Medical Requests':
             case 'Cardiology':
             case 'Care Worker':
             case 'Eye Lenses':
@@ -394,7 +397,7 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
             case 'Review Prescription':
                 navigate('/clinical/me?tab=adherence');
                 return;
-            case 'View Request':
+            case 'View Collaboration Request':
                 navigate('/requests');
                 return;
 
@@ -579,14 +582,14 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
 
         // Service Actions (B2C/General)
         { id: 'view-prescriptions', label: 'Review Prescription', icon: Pill, color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ring-indigo-200', roles: ['patient'] },
-        { id: 'view-requests', label: 'View Request', icon: ClipboardList, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 ring-amber-200', roles: ['patient'] },
+        { id: 'view-requests', label: 'View Collaboration Request', icon: ClipboardList, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 ring-amber-200', roles: ['patient'] },
         { id: 'ai-triage', label: 'AI Symptom Check', icon: Brain, color: 'bg-violet-50 text-violet-700 hover:bg-violet-100 ring-violet-200', roles: ['patient'] },
         { id: 'search-service', label: 'Search for Service', icon: Search, color: 'bg-teal-50 text-teal-700 hover:bg-teal-100 ring-teal-200', roles: ['patient'] },
         { id: 'appointments', label: 'Request Consultation', icon: Calendar, color: 'bg-blue-50 text-blue-600 hover:bg-blue-100', roles: ['patient'] },
         { id: 'ambulance', label: (['center', 'hospital', 'pharmacy', 'diagnostic', 'fitness_center', 'staff', 'maternity'].some((r: any) => userRoles.includes(r as any))) ? 'CONNECT AMBULANCE TEAM' : 'Call Ambulance', icon: Truck, color: 'bg-red-50 text-red-600 hover:bg-red-100', roles: ['patient', 'doctor', 'staff', 'center_staff', 'diagnostic', 'fitness_center', 'maternity'] },
         { id: 'surgery', label: 'Book a Surgery', icon: Activity, color: 'bg-rose-50 text-rose-600 hover:bg-rose-100', roles: ['patient'] },
         { id: 'teleconsult', label: primaryRole === 'mortuary' ? 'Call Corpse Depositor' : 'Call a Practitioner', icon: primaryRole === 'mortuary' ? Phone : Stethoscope, color: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100', roles: ['patient', 'mortuary'] },
-        { id: 'diagnostics', label: ['center', 'maternity', 'hospital', 'diagnostic'].some(r => userRoles.includes(r as any)) ? 'MEDICAL REQUEST' : 'Medical Requests', icon: TestTube, color: 'bg-amber-50 text-amber-600 hover:bg-amber-100', roles: ['patient', 'doctor', 'nurse', 'center', 'maternity', 'hospital', 'diagnostic'] },
+        { id: 'diagnostics', label: ['center', 'maternity', 'hospital', 'diagnostic'].some(r => userRoles.includes(r as any)) ? 'DIAGNOSTIC & TEST REQUEST' : 'Diagnostic & Test Requests', icon: TestTube, color: 'bg-amber-50 text-amber-600 hover:bg-amber-100', roles: ['patient', 'doctor', 'nurse', 'center', 'maternity', 'hospital', 'diagnostic'] },
         { id: 'cardiology', label: 'Cardiology Services', icon: Heart, color: 'bg-rose-50 text-rose-600 hover:bg-rose-100', roles: ['patient', 'doctor'] },
         { id: 'fitness', label: 'Fitness Center Near You', icon: Building, color: 'bg-orange-50 text-orange-600 hover:bg-orange-100', roles: ['patient'] },
         { id: 'blood-donation', label: 'Blood Donation', icon: Heart, color: 'bg-pink-50 text-pink-600 hover:bg-pink-100', roles: ['patient', 'doctor', 'nurse', 'staff', 'center_staff'] },

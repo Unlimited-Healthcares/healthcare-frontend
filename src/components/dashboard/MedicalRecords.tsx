@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Share2, Settings, Plus, Filter, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { hasPermission, getPermissions } from '@/lib/permissions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { complianceApi } from '@/services/complianceApi';
+import { ShieldAlert } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 import { SharedMedicalRecordsViewer } from './SharedMedicalRecordsViewer';
 import { PatientSharingPreferences } from './PatientSharingPreferences';
@@ -77,13 +83,28 @@ export function MedicalRecords({
   onAction,
   hasMedicalStaff = true
 }: MedicalRecordsProps) {
-  const isMedicalStaff = ['center_staff', 'doctor', 'nurse', 'staff', 'admin'].includes(userRole) && hasMedicalStaff;
+  const { user } = useAuth();
+  const permissions = getPermissions(user?.roles);
+  const isMedicalStaff = (['center_staff', 'doctor', 'nurse', 'staff', 'admin'].includes(userRole) && hasMedicalStaff) || permissions.canViewClinicalNotes;
   const [activeTab, setActiveTab] = useState<string>(!isMedicalStaff ? 'preferences' : 'records');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MockRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<MockRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmergencyOverride, setIsEmergencyOverride] = useState(false);
+
+  const handleBreakGlass = async () => {
+    if (window.confirm("WARNING: You are initiating an EMERGENCY OVERRIDE (Break Glass). This action will grant you temporary full access to this patient's records. THIS ACTION IS LOGGED AND AUDITED FOR COMPLIANCE. Continue?")) {
+      setIsEmergencyOverride(true);
+      await complianceApi.logAction('EMERGENCY_OVERRIDE_ACTIVATED', 'PATIENT_RECORD', {
+        patientId,
+        centerId,
+        reason: 'Code Blue / Emergency Access'
+      });
+      toast.success("Emergency Override Activated. Access granted.");
+    }
+  };
 
   // Effect to load records when patientId changes
   useEffect(() => {
@@ -142,14 +163,16 @@ export function MedicalRecords({
               <FileText className="h-4 w-4 mr-2" />
               Make Recommendation
             </Button>
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 font-bold"
-              disabled={!patientId}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Record
-            </Button>
+            {permissions.canViewClinicalNotes && (
+              <Button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-blue-600 hover:bg-blue-700 font-bold"
+                disabled={!patientId}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Record
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -183,7 +206,13 @@ export function MedicalRecords({
           canEdit={isMedicalStaff}
           canShare={isMedicalStaff}
           onEdit={() => console.log('Edit record')}
-          onShare={() => console.log('Share record')}
+          onShare={() => {
+            console.log('Share record');
+            complianceApi.logAction('RECORD_SHARED', 'MEDICAL_RECORD', {
+                recordId: selectedRecord.id,
+                patientId: selectedRecord.patientId
+            });
+          }}
         />
       )}
 
@@ -229,6 +258,22 @@ export function MedicalRecords({
                   <Filter className="h-4 w-4 mr-2" />
                   Filter
                 </Button>
+                {user?.roles?.includes('doctor') && !isEmergencyOverride && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleBreakGlass}
+                    className="rounded-xl bg-red-600 hover:bg-red-700 animate-pulse font-black uppercase text-[10px] tracking-widest px-6"
+                  >
+                    <ShieldAlert className="h-4 w-4 mr-2" />
+                    Break Glass
+                  </Button>
+                )}
+                {isEmergencyOverride && (
+                  <Badge className="bg-red-100 text-red-600 border-red-200 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4" />
+                    Emergency Access Active
+                  </Badge>
+                )}
               </div>
 
               {!hasMedicalStaff ? (
@@ -259,7 +304,15 @@ export function MedicalRecords({
               ) : (
                 <div className="grid gap-4">
                   {records.length > 0 ? (
-                    records.map(record => (
+                    records
+                      .filter((record: any) => {
+                        // Filter psychiatric records if user doesn't have permission AND NOT in emergency override
+                        if (record.reportType === 'psychiatric' && !permissions.canViewPsychNotes && !isEmergencyOverride) {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .map((record: any) => (
                       <Card key={record.id} className="cursor-pointer hover:shadow-md transition-shadow rounded-xl border-gray-100">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
@@ -278,7 +331,14 @@ export function MedicalRecords({
                               variant="ghost"
                               size="sm"
                               className="hover:bg-blue-50 text-blue-600 font-bold"
-                              onClick={() => setSelectedRecord(record)}
+                              onClick={() => {
+                                setSelectedRecord(record);
+                                complianceApi.logAction('RECORD_VIEWED', 'MEDICAL_RECORD', {
+                                    recordId: record.id,
+                                    patientId: record.patientId,
+                                    emergencyAccess: isEmergencyOverride
+                                });
+                              }}
                             >
                               View
                             </Button>

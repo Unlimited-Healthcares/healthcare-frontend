@@ -53,6 +53,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { centerManagementService } from '@/services/centerManagementService';
+import { profileApi } from '@/services/profileApi';
 import { SERVICE_CATEGORIES, CenterService, CenterServiceFormData } from '@/types/center-management';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -152,11 +153,13 @@ const DEFAULT_SERVICES = [
 ];
 
 interface ServiceManagementProps {
-  centerId: string;
+  centerId?: string;
+  userId?: string;
   centerType?: string;
 }
 
-export function ServiceManagement({ centerId, centerType }: ServiceManagementProps) {
+export function ServiceManagement({ centerId, userId, centerType }: ServiceManagementProps) {
+  const isUserMode = !!userId && !centerId;
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<CenterService[]>([]);
   const [filteredServices, setFilteredServices] = useState<CenterService[]>([]);
@@ -185,11 +188,18 @@ export function ServiceManagement({ centerId, centerType }: ServiceManagementPro
   const fetchServices = useCallback(async () => {
     setLoading(true);
     try {
-      const servicesData = await centerManagementService.getServices({
-        center_id: centerId,
-      });
-      setServices(servicesData);
-      setFilteredServices(servicesData);
+      if (isUserMode && userId) {
+        const profile = await profileApi.getUserProfile();
+        const userServices = profile?.services || profile?.offeredServices || [];
+        setServices(userServices);
+        setFilteredServices(userServices);
+      } else if (centerId) {
+        const servicesData = await centerManagementService.getServices({
+          center_id: centerId,
+        });
+        setServices(servicesData);
+        setFilteredServices(servicesData);
+      }
     } catch (error) {
       console.error('Error fetching services:', error);
       toast({
@@ -200,7 +210,7 @@ export function ServiceManagement({ centerId, centerType }: ServiceManagementPro
     } finally {
       setLoading(false);
     }
-  }, [centerId]);
+  }, [centerId, userId, isUserMode]);
 
   const applyFilters = useCallback(() => {
     let filtered = [...services];
@@ -289,20 +299,32 @@ export function ServiceManagement({ centerId, centerType }: ServiceManagementPro
 
   const handleCreateService = async (data: CenterServiceFormData) => {
     try {
-      const response = await centerManagementService.createService(centerId, data);
-      if (response.success) {
+      if (isUserMode) {
+        const newService = { ...data, id: crypto.randomUUID() };
+        const updatedServices = [...services, newService];
+        await profileApi.createOrUpdateProfile({ services: updatedServices } as any);
         toast({
           title: 'Success',
-          description: response.message,
+          description: 'Service added to your profile.',
         });
         setServiceDialogOpen(false);
         fetchServices();
-      } else {
-        toast({
-          title: 'Error',
-          description: response.message,
-          variant: 'destructive',
-        });
+      } else if (centerId) {
+        const response = await centerManagementService.createService(centerId, data);
+        if (response.success) {
+          toast({
+            title: 'Success',
+            description: response.message,
+          });
+          setServiceDialogOpen(false);
+          fetchServices();
+        } else {
+          toast({
+            title: 'Error',
+            description: response.message,
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       console.error('Error creating service:', error);
@@ -318,20 +340,33 @@ export function ServiceManagement({ centerId, centerType }: ServiceManagementPro
     if (!selectedService) return;
 
     try {
-      const response = await centerManagementService.updateService(selectedService.id, data);
-      if (response.success) {
+      if (isUserMode) {
+        const updatedServices = services.map((s) =>
+          s.id === selectedService.id ? { ...s, ...data } : s
+        );
+        await profileApi.createOrUpdateProfile({ services: updatedServices } as any);
         toast({
           title: 'Success',
-          description: response.message,
+          description: 'Service updated on your profile.',
         });
         setServiceDialogOpen(false);
         fetchServices();
       } else {
-        toast({
-          title: 'Error',
-          description: response.message,
-          variant: 'destructive',
-        });
+        const response = await centerManagementService.updateService(selectedService.id, data);
+        if (response.success) {
+          toast({
+            title: 'Success',
+            description: response.message,
+          });
+          setServiceDialogOpen(false);
+          fetchServices();
+        } else {
+          toast({
+            title: 'Error',
+            description: response.message,
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       console.error('Error updating service:', error);
@@ -347,20 +382,31 @@ export function ServiceManagement({ centerId, centerType }: ServiceManagementPro
     if (!selectedService) return;
 
     try {
-      const response = await centerManagementService.deleteService(selectedService.id);
-      if (response.success) {
+      if (isUserMode) {
+        const updatedServices = services.filter((s) => s.id !== selectedService.id);
+        await profileApi.createOrUpdateProfile({ services: updatedServices } as any);
         toast({
           title: 'Success',
-          description: response.message,
+          description: 'Service removed from your profile.',
         });
         setDeleteDialogOpen(false);
         fetchServices();
       } else {
-        toast({
-          title: 'Error',
-          description: response.message,
-          variant: 'destructive',
-        });
+        const response = await centerManagementService.deleteService(selectedService.id);
+        if (response.success) {
+          toast({
+            title: 'Success',
+            description: response.message,
+          });
+          setDeleteDialogOpen(false);
+          fetchServices();
+        } else {
+          toast({
+            title: 'Error',
+            description: response.message,
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       console.error('Error deleting service:', error);

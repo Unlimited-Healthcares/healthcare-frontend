@@ -67,7 +67,7 @@ export const PremiumActionHub = ({ onAction }: { onAction: (action: string) => v
         },
         {
             id: 'book',
-            label: 'Book Consultation',
+            label: 'Request Consultation',
             sublabel: 'In-person visits and surgeries',
             icon: CalendarCheck,
             color: 'from-slate-700 to-slate-900',
@@ -75,7 +75,7 @@ export const PremiumActionHub = ({ onAction }: { onAction: (action: string) => v
         },
         {
             id: 'labs',
-            label: 'Diagnostics & Labs',
+            label: 'Diagnostic & Test Request',
             sublabel: 'Blood tests, Scans, Imaging',
             icon: TestTube,
             color: 'from-amber-500 to-orange-700',

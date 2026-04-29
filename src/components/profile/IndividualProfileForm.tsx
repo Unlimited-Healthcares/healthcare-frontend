@@ -527,6 +527,10 @@ const IndividualProfileForm: React.FC<IndividualProfileFormProps> = ({
         genotype: isPatient ? data.genotype || undefined : undefined,
         height: isPatient ? (data.height ? Number(data.height) : undefined) : undefined,
         weight: isPatient ? (data.weight ? Number(data.weight) : undefined) : undefined,
+        bodyTemperature: isPatient ? (data.bodyTemperature ? Number(data.bodyTemperature) : undefined) : undefined,
+        bloodPressure: isPatient ? data.bloodPressure || undefined : undefined,
+        allergies: isPatient ? data.allergies || undefined : undefined,
+        chronicDisease: isPatient ? data.chronicDisease || undefined : undefined,
         location: hasLocation
           ? {
             city: data.location?.city?.trim() || '',

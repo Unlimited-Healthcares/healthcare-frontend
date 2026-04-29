@@ -77,10 +77,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden">
         <Navbar onToggleSidebar={handleToggleSidebar} isMobile={isMobile} />
 
-        <main className="flex-1 p-3 sm:p-6 md:p-8 bg-gray-50 w-full overflow-y-auto overflow-x-hidden pb-36 md:pb-10 safe-area-pb scrolling-touch">
+        <main className="flex-1 p-3 sm:p-6 md:p-8 bg-gray-50 w-full overflow-y-auto overflow-x-hidden pb-44 md:pb-12 safe-area-pb" style={{WebkitOverflowScrolling: 'touch'}}>
           <div className="healthcare-container max-w-full">
             {profile?.display_id && (
               <UserIdDisplay id={profile.display_id} label="Your Medical ID" />

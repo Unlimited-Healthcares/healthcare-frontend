@@ -40,6 +40,7 @@ import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
 import { careTaskService } from '@/services/careTaskService';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
+import { ServiceManagement } from './ServiceManagement';
 
 
 
@@ -280,6 +281,7 @@ export const NurseDashboard = () => {
                     <TabsTrigger value="monitoring" className="rounded-lg px-6">Monitoring</TabsTrigger>
                     <TabsTrigger value="patients" className="rounded-lg px-6">Patient List</TabsTrigger>
                     <TabsTrigger value="tasks" className="rounded-lg px-6">Care Tasks</TabsTrigger>
+                    <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-4">
@@ -438,6 +440,14 @@ export const NurseDashboard = () => {
                             </Card>
                         ))}
                     </div>
+                </TabsContent>
+
+                <TabsContent value="services">
+                    <ServiceManagement
+                        userId={user?.id}
+                        centerId={(profile as any)?.centerId}
+                        centerType={(profile as any)?.centerType || 'clinic'}
+                    />
                 </TabsContent>
             </Tabs>
 

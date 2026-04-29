@@ -102,10 +102,10 @@ const InvitationsPage: React.FC = () => {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Invitations
+            Service Invitations
           </h1>
           <p className="text-gray-600">
-            Send and manage invitations to join your healthcare network.
+            Send and manage invitations to join your healthcare service network.
           </p>
         </div>
 
@@ -260,18 +260,18 @@ const InvitationsPage: React.FC = () => {
                           </div>
                         </Badge>
                       </div>
-                      
+
                       <p className="text-sm text-gray-600 mb-1">
                         {invitation.invitationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         {invitation.role && ` • ${invitation.role}`}
                       </p>
-                      
+
                       {invitation.message && (
                         <p className="text-sm text-gray-500">
                           "{invitation.message}"
                         </p>
                       )}
-                      
+
                       <p className="text-xs text-gray-400 mt-2">
                         Sent {new Date(invitation.createdAt).toLocaleDateString()}
                         {invitation.expiresAt && (

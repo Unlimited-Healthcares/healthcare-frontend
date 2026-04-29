@@ -107,6 +107,8 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
 
   // Seen state
   const [patientCondition, setPatientCondition] = useState('Stable');
+  const [vitals, setVitals] = useState({ hr: '', bp: '', spo2: '', gcs: '', bg: '' });
+  const [mechanism, setMechanism] = useState('Medical');
 
   // Delivered state
   const [handover, setHandover] = useState({
@@ -155,7 +157,11 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
 
   const handleSeen = () => {
     if (selectedRequestId) {
-      onUpdateAmbulanceStatus(selectedRequestId, 'on_scene', { patientConditionOnScene: patientCondition });
+      onUpdateAmbulanceStatus(selectedRequestId, 'on_scene', { 
+        patientConditionOnScene: patientCondition,
+        vitals,
+        mechanismOfInjury: mechanism
+      });
       setSeenDialogOpen(false);
       setSelectedRequestId(null);
     }
@@ -306,9 +312,22 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
         if (item.status === 'on_scene') {
           actions.push({ label: 'Start Transport', action: () => onUpdateAmbulanceStatus(item.id, 'transporting') });
         }
+        if (['on_scene', 'transporting'].includes(item.status)) {
+          actions.push({
+            label: 'Log Meds & Interventions', action: () => {
+              window.dispatchEvent(new CustomEvent('open-clinical-request', {
+                detail: {
+                  patientId: item.patientId,
+                  category: 'medication',
+                  notes: `Pre-Hospital Intervention Log for ${item.patientName}. Meds given: `
+                }
+              }));
+            }
+          });
+        }
         if (item.status === 'transporting') {
           actions.push({
-            label: 'Delivered (Handover)', action: () => {
+            label: 'Arrived at ER (Handoff)', action: () => {
               setSelectedRequestId(item.id);
               setDeliveredDialogOpen(true);
             }
@@ -437,7 +456,13 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
                 <h3 className="font-semibold text-gray-900">
                   {request.requestNumber}
                 </h3>
-                <p className="text-sm text-gray-600">{request.medicalCondition}</p>
+                <p className="text-sm text-gray-600">
+                  {request.medicalCondition} 
+                  {request.priority === 'critical' && <span className="ml-2 text-[10px] font-black uppercase text-red-600 tracking-widest bg-red-100 px-1 rounded">Red Triage</span>}
+                  {request.priority === 'high' && <span className="ml-2 text-[10px] font-black uppercase text-orange-600 tracking-widest bg-orange-100 px-1 rounded">Yellow Triage</span>}
+                  {request.priority === 'medium' && <span className="ml-2 text-[10px] font-black uppercase text-yellow-600 tracking-widest bg-yellow-100 px-1 rounded">Yellow Triage</span>}
+                  {request.priority === 'low' && <span className="ml-2 text-[10px] font-black uppercase text-green-600 tracking-widest bg-green-100 px-1 rounded">Green Triage</span>}
+                </p>
               </div>
             </div>
 
@@ -447,11 +472,36 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
                 <span>{request.patientName} ({request.patientAge} years old, {request.patientGender})</span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="h-4 w-4" />
-                <span>{request.pickupAddress}</span>
+              <div className="flex items-center justify-between gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                   <MapPin className="h-4 w-4" />
+                   <span>{request.pickupAddress}</span>
+                </div>
+                {['dispatched', 'en_route'].includes(request.status) && (
+                   <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">ETA: 8 mins</span>
+                )}
               </div>
             </div>
+            
+            {userRole === 'ambulance_service' && request.medicalHistory && (
+              <div className="mb-3 bg-red-50/50 p-3 rounded-xl border border-red-100 shadow-sm">
+                 <p className="text-[10px] font-black text-red-800 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Shield className="h-3 w-3" /> Medical Snapshot</p>
+                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-red-900">
+                    {request.medicalHistory.blood_type && (
+                       <span><span className="font-bold opacity-75">Blood Type:</span> {request.medicalHistory.blood_type}</span>
+                    )}
+                    {request.medicalHistory.allergies && request.medicalHistory.allergies.length > 0 && (
+                       <span><span className="font-bold opacity-75">Allergies:</span> {request.medicalHistory.allergies.join(', ')}</span>
+                    )}
+                    {request.medicalHistory.conditions && request.medicalHistory.conditions.length > 0 && (
+                       <span><span className="font-bold opacity-75">Conditions:</span> {request.medicalHistory.conditions.join(', ')}</span>
+                    )}
+                    {request.medicalHistory.medications && request.medicalHistory.medications.length > 0 && (
+                       <span><span className="font-bold opacity-75">Medications:</span> {request.medicalHistory.medications.join(', ')}</span>
+                    )}
+                 </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -662,8 +712,54 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
             Register the time of meeting and the patient's current condition.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
           <div className="space-y-2">
+            <Label>Mechanism of Injury / Reason</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {['Medical', 'MVA', 'Fall', 'Chest Pain', 'Trauma', 'Other'].map((mech) => (
+                <Button
+                  key={mech}
+                  variant={mechanism === mech ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMechanism(mech)}
+                  className="w-full text-xs"
+                >
+                  {mech}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-2 pt-2 border-t">
+            <Label className="flex items-center justify-between">
+              Vitals 
+              <span className="text-[10px] text-gray-400 font-normal">Optional</span>
+            </Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px]">Heart Rate (bpm)</Label>
+                <Input value={vitals.hr} onChange={e => setVitals({...vitals, hr: e.target.value})} placeholder="e.g. 80" className="h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Blood Pressure</Label>
+                <Input value={vitals.bp} onChange={e => setVitals({...vitals, bp: e.target.value})} placeholder="e.g. 120/80" className="h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">SpO2 (%)</Label>
+                <Input value={vitals.spo2} onChange={e => setVitals({...vitals, spo2: e.target.value})} placeholder="e.g. 98" className="h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Blood Glucose (mg/dL)</Label>
+                <Input value={vitals.bg} onChange={e => setVitals({...vitals, bg: e.target.value})} placeholder="e.g. 100" className="h-8" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label className="text-[10px]">GCS (Glasgow Coma Scale)</Label>
+                <Input value={vitals.gcs} onChange={e => setVitals({...vitals, gcs: e.target.value})} placeholder="e.g. 15" className="h-8" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t">
             <Label>Patient Condition</Label>
             <div className="grid grid-cols-2 gap-2">
               {['Stable', 'Serious', 'Critical', 'Dead', 'Unconscious'].map((cond) => (
@@ -672,12 +768,25 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
                   variant={patientCondition === cond ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setPatientCondition(cond)}
-                  className="w-full"
+                  className="w-full text-xs"
                 >
                   {cond}
                 </Button>
               ))}
             </div>
+          </div>
+          
+          <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 mt-2">
+            <div className="flex items-center gap-2 mb-2">
+                <Navigation className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-bold text-blue-900">En-Route Transmissions Ready</span>
+            </div>
+            <p className="text-[10px] text-blue-700">Once confirmed, you can transmit live ECG, GPS, and connect via video to the ER doctor.</p>
+          </div>
+          
+          <div className="space-y-2 pt-2 border-t">
+            <Label className="text-xs">Upload Scene Photo/Video (Optional)</Label>
+            <Input type="file" accept="image/*,video/*" multiple className="text-xs text-gray-500" />
           </div>
         </div>
         <DialogFooter>
@@ -700,6 +809,14 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="bg-emerald-50/50 p-3 rounded-lg border border-emerald-100 mb-4">
+            <div className="flex items-center gap-2 mb-1">
+                <Shield className="h-4 w-4 text-emerald-600" />
+                <span className="text-xs font-bold text-emerald-900">Auto-Generate Pre-Hospital Report</span>
+            </div>
+            <p className="text-[10px] text-emerald-700">This will automatically compile time stamps, vitals, meds, and interventions, and route the digital record to the ER doctor, Nurse, Radiographer, and Pharmacist.</p>
+          </div>
+          
           <div className="space-y-1">
             <Label>Facility Name (Hospital/Morgue)</Label>
             <Input
@@ -709,7 +826,10 @@ export const EmergencyList: React.FC<EmergencyListProps> = ({
             />
           </div>
           <div className="space-y-1">
-            <Label>Receiver's Full Name</Label>
+            <div className="flex items-center justify-between">
+               <Label>Receiver's Full Name</Label>
+               <Button variant="outline" size="sm" className="h-6 text-[10px] text-emerald-600 border-emerald-200 hover:bg-emerald-50">Scan Wristband QR</Button>
+            </div>
             <Input
               placeholder="Doctor, Nurse, or Mortician"
               value={handover.receiverName}

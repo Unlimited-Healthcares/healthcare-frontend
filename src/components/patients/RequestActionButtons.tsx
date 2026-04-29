@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { hasPermission } from '@/lib/permissions';
 import {
   FilePlus,
   ArrowRightLeft,
@@ -44,6 +46,7 @@ const MOCK_CENTERS = [
 ];
 
 export const RequestActionButtons: React.FC<RequestActionButtonsProps> = ({ patient }) => {
+  const { user } = useAuth();
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [selectedTests, setSelectedTests] = useState<any[]>([]);
   const [currentMenu, setCurrentMenu] = useState<any[]>(MEDICAL_TESTS);
@@ -100,50 +103,60 @@ export const RequestActionButtons: React.FC<RequestActionButtonsProps> = ({ pati
 
   return (
     <div className="grid grid-cols-2 gap-3 mt-6 border-t pt-6">
-      <Button
-        onClick={handleCreateRequest}
-        variant="outline"
-        className="h-24 flex flex-col items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 transition-all font-bold"
-      >
-        <FilePlus className="h-6 w-6" />
-        CREATE REQUEST
-      </Button>
+      {hasPermission(user?.roles, 'canViewOrdersOnly') && (
+        <Button
+          onClick={handleCreateRequest}
+          variant="outline"
+          className="h-24 flex flex-col items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 transition-all font-bold"
+        >
+          <FilePlus className="h-6 w-6" />
+          CREATE REQUEST
+        </Button>
+      )}
 
-      <Button
-        onClick={handleCreatePlan}
-        variant="outline"
-        className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/10 dark:hover:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 transition-all font-bold"
-      >
-        <Clipboard className="h-6 w-6" />
-        CLINICAL TREATMENT PLAN
-      </Button>
+      {hasPermission(user?.roles, 'canViewCarePlan') && (
+        <Button
+          onClick={handleCreatePlan}
+          variant="outline"
+          className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/10 dark:hover:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 transition-all font-bold"
+        >
+          <Clipboard className="h-6 w-6" />
+          CLINICAL TREATMENT PLAN
+        </Button>
+      )}
 
-      <Button
-        onClick={handleRefer}
-        variant="outline"
-        className="h-24 flex flex-col items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 transition-all font-bold"
-      >
-        <ArrowRightLeft className="h-6 w-6" />
-        REFER PATIENT
-      </Button>
+      {hasPermission(user?.roles, 'canViewClinicalNotes') && (
+        <Button
+          onClick={handleRefer}
+          variant="outline"
+          className="h-24 flex flex-col items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 transition-all font-bold"
+        >
+          <ArrowRightLeft className="h-6 w-6" />
+          REFER PATIENT
+        </Button>
+      )}
 
-      <Button
-        onClick={handleCreateReport}
-        variant="outline"
-        className="h-24 flex flex-col items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:hover:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 transition-all font-bold"
-      >
-        <Activity className="h-6 w-6" />
-        MEDICAL REPORT
-      </Button>
+      {hasPermission(user?.roles, 'canViewClinicalNotes') && (
+        <Button
+          onClick={handleCreateReport}
+          variant="outline"
+          className="h-24 flex flex-col items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:hover:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 transition-all font-bold"
+        >
+          <Activity className="h-6 w-6" />
+          MEDICAL REPORT
+        </Button>
+      )}
 
-      <Button
-        onClick={handleClinicalEncounter}
-        variant="default"
-        className="h-24 flex flex-col items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-lg transition-all font-bold col-span-2"
-      >
-        <Stethoscope className="h-6 w-6" />
-        CLINICAL ENCOUNTER WORKSPACE
-      </Button>
+      {hasPermission(user?.roles, 'canViewClinicalNotes') && (
+        <Button
+          onClick={handleClinicalEncounter}
+          variant="default"
+          className="h-24 flex flex-col items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-lg transition-all font-bold col-span-2"
+        >
+          <Stethoscope className="h-6 w-6" />
+          CLINICAL ENCOUNTER WORKSPACE
+        </Button>
+      )}
 
       {/* CREATE REQUEST DIALOG */}
       <Dialog open={activeDialog === 'request'} onOpenChange={() => setActiveDialog(null)}>
