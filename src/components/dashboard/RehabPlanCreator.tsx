@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { rehabService } from '@/services/rehabService';
+
 interface Exercise {
     id: string;
     name: string;
@@ -30,7 +32,7 @@ interface Exercise {
     videoUrl: string;
 }
 
-export function RehabPlanCreator() {
+export function RehabPlanCreator({ patientId }: { patientId: string }) {
     const [exercises, setExercises] = useState<Exercise[]>([
         { id: 'ex1', name: 'Ankle Pumps', sets: '3', reps: '10', videoUrl: 'https://youtube.com/watch?v=example1' },
         { id: 'ex2', name: 'Quadriceps Sets', sets: '3', reps: '10', videoUrl: 'https://youtube.com/watch?v=example2' },
@@ -38,6 +40,7 @@ export function RehabPlanCreator() {
     ]);
 
     const [newExercise, setNewExercise] = useState({ name: '', sets: '', reps: '', videoUrl: '' });
+    const [isDispatching, setIsDispatching] = useState(false);
 
     const handleAdd = () => {
         if (!newExercise.name) return;
@@ -50,10 +53,32 @@ export function RehabPlanCreator() {
         setExercises(exercises.filter(e => e.id !== id));
     };
 
-    const handleDispatch = () => {
-        toast.success("Home Program Dispatched", {
-            description: "Patient notified via app. Video demonstrations synchronized to patient portal."
-        });
+    const handleDispatch = async () => {
+        if (exercises.length === 0) return;
+        
+        setIsDispatching(true);
+        try {
+            await rehabService.createPlan({
+                patientId: patientId || 'P-001', // Fallback for demo
+                title: 'Post-Op Recovery Program',
+                exercises: exercises.map(ex => ({
+                    name: ex.name,
+                    sets: ex.sets,
+                    reps: ex.reps,
+                    videoUrl: ex.videoUrl
+                }))
+            });
+
+            toast.success("Home Program Dispatched", {
+                description: "Patient notified via app. Video demonstrations synchronized to patient portal."
+            });
+        } catch (error) {
+            toast.error("Dispatch Failed", {
+                description: "Could not synchronize rehab plan with the patient's mobile app."
+            });
+        } finally {
+            setIsDispatching(false);
+        }
     };
 
     return (
@@ -169,9 +194,11 @@ export function RehabPlanCreator() {
                             </Button>
                             <Button 
                                 onClick={handleDispatch}
+                                disabled={isDispatching || exercises.length === 0}
                                 className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-indigo-100 gap-3"
                             >
-                                <Send className="h-5 w-5" /> Dispatch Full Program
+                                <Send className={`h-5 w-5 ${isDispatching ? 'animate-pulse' : ''}`} /> 
+                                {isDispatching ? 'Synchronizing...' : 'Dispatch Full Program'}
                             </Button>
                         </div>
 

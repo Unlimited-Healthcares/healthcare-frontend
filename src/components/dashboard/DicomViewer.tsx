@@ -49,6 +49,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { imagingService } from "@/services/imagingService";
+import { dicomWebService, DicomWebStudy, DicomWebSeries, DicomWebInstance } from "@/services/dicomWebService";
 import { cn } from "@/lib/utils";
 
 interface DicomImage {
@@ -111,6 +112,7 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
   // Security states
   const [isDeidentified, setIsDeidentified] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [isPacsMode, setIsPacsMode] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   const imageRef = useRef<HTMLImageElement>(null);
@@ -130,38 +132,56 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
     if (!patientId) return;
     try {
       setIsLoading(true);
-      const data = await imagingService.getPatientStudies(patientId);
-      const mappedStudies: DicomStudy[] = data.map(s => ({
-        id: s.id,
-        patientName: s.patient?.name || 'Unknown Patient',
-        patientId: s.patientId,
-        studyDate: s.studyDate ? new Date(s.studyDate).toISOString().split('T')[0] : 'N/A',
-        studyDescription: s.description || 'No Description',
-        series: [{
-          id: s.id + '-series',
-          description: s.modality + ' Series',
-          modality: s.modality || 'UNK',
-          images: (s.files || []).map(f => ({
-            id: f.id,
-            url: '',
-            thumbnail: '/placeholder-dicom.jpg',
-            patientName: s.patient?.name,
-            patientId: s.patientId,
-            studyDate: s.studyDate,
-            modality: s.modality
-          }))
-        }]
-      }));
-      setStudies(mappedStudies);
-      if (mappedStudies.length > 0 && !currentStudy) {
-        handleStudySelect(mappedStudies[0].id, mappedStudies);
+      
+      if (isPacsMode) {
+        // Fetch from Live PACS via DICOM-web bridge
+        const pacsStudies = await dicomWebService.searchStudies({ PatientID: patientId });
+        const mappedStudies: DicomStudy[] = pacsStudies.map(s => ({
+          id: s.studyInstanceUid,
+          patientName: s.patientName || 'Unknown Patient',
+          patientId: s.patientId || patientId,
+          studyDate: s.studyDate || 'N/A',
+          studyDescription: s.description || 'Live PACS Study',
+          series: [] // Will fetch on demand
+        }));
+        setStudies(mappedStudies);
+        if (mappedStudies.length > 0) handleStudySelect(mappedStudies[0].id, mappedStudies);
+      } else {
+        // Fetch from Local Node
+        const data = await imagingService.getPatientStudies(patientId);
+        const mappedStudies: DicomStudy[] = data.map(s => ({
+          id: s.id,
+          patientName: s.patient?.name || 'Unknown Patient',
+          patientId: s.patientId,
+          studyDate: s.studyDate ? new Date(s.studyDate).toISOString().split('T')[0] : 'N/A',
+          studyDescription: s.description || 'No Description',
+          series: [{
+            id: s.id + '-series',
+            description: s.modality + ' Series',
+            modality: s.modality || 'UNK',
+            images: (s.files || []).map(f => ({
+              id: f.id,
+              url: '',
+              thumbnail: '/placeholder-dicom.jpg',
+              patientName: s.patient?.name,
+              patientId: s.patientId,
+              studyDate: s.studyDate,
+              modality: s.modality
+            }))
+          }]
+        }));
+        setStudies(mappedStudies);
+        if (mappedStudies.length > 0 && !currentStudy) {
+          handleStudySelect(mappedStudies[0].id, mappedStudies);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch imaging studies:', error);
+      toast({ title: "PACS Sync Error", description: "Could not reach the live PACS bridge.", variant: "destructive" });
     } finally {
       setTimeout(() => setIsLoading(false), 500);
     }
-  }, [patientId]);
+  }, [patientId, isPacsMode]);
 
   useEffect(() => {
     fetchStudies();
@@ -212,28 +232,61 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
     const image = series.images[imageIndex];
     if (!image.url) {
       try {
-        const { url } = await imagingService.getFileUrl(image.id);
-        image.url = url;
-        image.thumbnail = url;
+        if (isPacsMode && currentStudy) {
+          // Construct WADO-RS URL for frame
+          // In PACS mode, image.id might be a placeholder or SOPInstanceUID
+          // For simplicity, we'll assume we have the metadata or fetch it
+          // Here we use a generic rendered frame URL
+          image.url = dicomWebService.getFrameUrl(currentStudy.id, series.id, image.id, imageIndex + 1);
+          image.thumbnail = image.url;
+        } else {
+          const { url } = await imagingService.getFileUrl(image.id);
+          image.url = url;
+          image.thumbnail = url;
+        }
       } catch (error) {
-        console.error('Failed to get signed URL:', error);
+        console.error('Failed to get frame URL:', error);
       }
     }
     setCurrentSeries(series);
     setCurrentImageIndex(imageIndex);
     resetControls();
-    addAuditLog('Image View', `Accessed frame ${imageIndex + 1} of series ${series.description}`);
+    addAuditLog('Image View', `Accessed frame ${imageIndex + 1} of series ${series.description} ${isPacsMode ? '(PACS)' : ''}`);
   };
 
-  const handleStudySelect = (studyId: string, currentStudies?: DicomStudy[]) => {
+  const handleStudySelect = async (studyId: string, currentStudies?: DicomStudy[]) => {
     const source = currentStudies || studies;
     const study = source.find(s => s.id === studyId);
     if (study) {
       setCurrentStudy(study);
+      
+      if (isPacsMode && study.series.length === 0) {
+        setIsLoading(true);
+        try {
+          const pacsSeries = await dicomWebService.getSeries(studyId);
+          study.series = pacsSeries.map(ser => ({
+            id: ser.seriesInstanceUid,
+            description: ser.description || `${ser.modality} Series`,
+            modality: ser.modality,
+            images: Array(ser.instanceCount).fill(null).map((_, i) => ({
+              id: `${ser.seriesInstanceUid}-f${i}`,
+              url: '',
+              thumbnail: '/placeholder-dicom.jpg'
+            }))
+          }));
+          setStudies([...source]);
+          toast({ title: "PACS Stream 100%", description: "Zero-latency buffer initialized." });
+        } catch (error) {
+          toast({ title: "PACS Series Error", variant: "destructive" });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
       if (study.series[0]) {
         handleImageSelect(study.series[0], 0);
       }
-      addAuditLog('Study Select', `Opened study: ${study.id}`);
+      addAuditLog('Study Select', `Opened study: ${study.id} ${isPacsMode ? '(LIVE PACS)' : '(LOCAL)'}`);
     }
   };
 
@@ -418,6 +471,15 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
 
         <div className="flex items-center gap-2 group">
           <div className="flex bg-[#12122b] rounded-xl p-1 border border-white/[0.05]">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 rounded-lg text-xs font-bold transition-all", isPacsMode ? "text-blue-400 bg-blue-500/10" : "text-slate-400")}
+              onClick={() => setIsPacsMode(!isPacsMode)}
+            >
+              <Activity className="w-3 h-3 md:mr-1.5" />
+              <span className="hidden md:inline">{isPacsMode ? "Live PACS" : "Local Node"}</span>
+            </Button>
             <Button
               variant="ghost"
               size="sm"

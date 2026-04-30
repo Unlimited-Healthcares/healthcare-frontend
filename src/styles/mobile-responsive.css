@@ -57,7 +57,7 @@ body {
   .h-screen, 
   .h-\[100dvh\],
   .min-h-screen {
-    height: 100dvh !important;
+    height: auto !important;
     min-height: 100dvh !important;
   }
 
@@ -149,8 +149,6 @@ body {
   }
 
   /* --- 2d. GREETINGS & TITLE SIZE --- */
-  body h1,
-  body .text-3xl,
   body [class*="Dashboard"] h1,
   body [class*="Profile"] h1 {
     font-size: 1.25rem !important;

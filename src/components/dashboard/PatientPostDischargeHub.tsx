@@ -21,7 +21,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function PatientPostDischargeHub() {
+import { PatientRehabTracker } from './PatientRehabTracker';
+
+export function PatientPostDischargeHub({ patientId }: { patientId: string }) {
     const [activeTab, setActiveTab] = useState('summary');
 
     const handleSOS = () => {
@@ -134,6 +136,14 @@ export function PatientPostDischargeHub() {
                             <MessageSquare className="h-6 w-6 text-blue-600" />
                             Chat with Nurse
                         </Button>
+                    </div>
+
+                    <div className="pt-6">
+                        <div className="flex items-center justify-between mb-4 px-2">
+                            <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">Recovery Daily Protocol</h3>
+                            <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[9px]">ENHANCED SYNC</Badge>
+                        </div>
+                        <PatientRehabTracker patientId={patientId || 'P-001'} />
                     </div>
                 </div>
 

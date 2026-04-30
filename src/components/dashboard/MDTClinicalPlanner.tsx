@@ -194,22 +194,46 @@ export function MDTClinicalPlanner({ patient, onComplete }: MDTClinicalPlannerPr
                             </div>
                         </div>
 
-                        <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] space-y-4">
+                        <div className="p-6 bg-slate-800/50 border border-white/10 rounded-[2.5rem] space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <ClipboardList className="h-5 w-5 text-indigo-400" />
+                                    <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Departmental Delegation</p>
+                                </div>
+                                <Badge className="bg-indigo-500/10 text-indigo-400 border-none text-[8px] font-black uppercase">AUTO-SYNC</Badge>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-bold uppercase text-white/80">Laboratory</span>
+                                    <Button size="sm" variant="ghost" className="h-7 text-[8px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10">Dispatch Tests</Button>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-bold uppercase text-white/80">Pharmacy</span>
+                                    <Button size="sm" variant="ghost" className="h-7 text-[8px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10">Push Prescription</Button>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-bold uppercase text-white/80">Imaging</span>
+                                    <Button size="sm" variant="ghost" className="h-7 text-[8px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/5 hover:bg-blue-500/10">Request Scans</Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] space-y-4">
                             <div className="flex items-center gap-3">
                                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
                                 <p className="text-xs font-black uppercase text-emerald-400 tracking-widest">MDT Consensus Status</p>
                             </div>
                             <div className="flex -space-x-2">
-                                {[1,2,3,4].map(i => (
-                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-indigo-600 flex items-center justify-center text-[10px] font-black">
-                                        {String.fromCharCode(64 + i)}
+                                {participants.filter(p => p.status === 'connected').map((p, i) => (
+                                    <div key={i} title={p.name} className="w-10 h-10 rounded-full border-4 border-slate-900 bg-indigo-600 flex items-center justify-center text-[10px] font-black shadow-lg">
+                                        {p.name.split(' ').map(n => n[0]).join('')}
                                     </div>
                                 ))}
-                                <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-white/10 flex items-center justify-center text-[10px] font-black">
-                                    +2
-                                </div>
                             </div>
-                            <p className="text-[10px] text-white/50 font-medium">Agreement reached by Cardiologist, Anaesthetist, and Nursing lead.</p>
+                            <p className="text-[10px] text-white/60 font-bold leading-relaxed">
+                                Consensus reached by all {participants.filter(p => p.status === 'connected').length} connected specialists. 
+                                Path documented with Digital Signature IDs.
+                            </p>
                         </div>
                     </div>
                 </div>

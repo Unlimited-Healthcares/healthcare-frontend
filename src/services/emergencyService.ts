@@ -76,6 +76,11 @@ export const emergencyService = {
     return response.data;
   },
 
+  updateClinicalData: async (requestId: string, data: { vitals?: any; interventions?: any[]; sceneMedia?: string[] }): Promise<AmbulanceRequest> => {
+    const response = await apiClient.put(`/emergency/ambulance/requests/${requestId}/clinical-data`, data);
+    return response.data;
+  },
+
   // Viral Reporting
   submitViralReport: async (data: CreateViralReportDto): Promise<ViralReport> => {
     const response = await apiClient.post('/emergency/viral-reporting/reports', data);

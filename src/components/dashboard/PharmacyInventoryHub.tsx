@@ -14,7 +14,8 @@ import {
     Truck,
     Calendar,
     ChevronRight,
-    ArrowUpRight
+    ArrowUpRight,
+    ShieldAlert
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -26,6 +27,7 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
+import { cn } from '@/lib/utils';
 
 const stockData = [
     { name: 'Amoxicillin', stock: 450, min: 100, status: 'ok' },
@@ -46,7 +48,7 @@ export function PharmacyInventoryHub() {
     return (
         <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-12">
-                {/* Inventory Stats */}
+                {/* Inventory Stats and Safety */}
                 <div className="lg:col-span-8 space-y-6">
                     <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between py-6">
@@ -95,6 +97,62 @@ export function PharmacyInventoryHub() {
                                     <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Value</p>
                                     <p className="text-xl font-black text-emerald-700 uppercase">₦2.4M</p>
                                     <p className="text-[9px] font-bold text-emerald-400 mt-1 uppercase">Total inventory value</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+                            <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                                <ShieldAlert className="h-4 w-4 text-rose-500" /> Safety & Interaction Analysis
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8">
+                            <div className="flex flex-col md:flex-row gap-8 items-center">
+                                <div className="flex-1 space-y-4">
+                                    <div className="p-6 bg-rose-50 rounded-[2.5rem] border border-rose-100 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 text-rose-500">
+                                            <AlertTriangle className="h-16 w-16" />
+                                        </div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Badge className="bg-rose-500 text-white border-none font-black text-[8px] uppercase px-3 py-1">CRITICAL INTERACTION</Badge>
+                                            <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Cross-Reference Active</span>
+                                        </div>
+                                        <h4 className="text-lg font-black text-rose-900 uppercase leading-tight">Warfarin + Aspirin Alert</h4>
+                                        <p className="text-xs font-bold text-rose-700/70 mt-2">Extreme risk of major bleeding detected for Patient #8821 in Ward 4. System blocker active for this combination.</p>
+                                        <div className="flex gap-2 mt-4">
+                                            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-[9px] uppercase tracking-widest">Notify Prescriber</Button>
+                                            <Button size="sm" variant="outline" className="border-rose-200 text-rose-600 rounded-xl font-black text-[9px] uppercase tracking-widest">View Alternatives</Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-amber-50 rounded-3xl border border-amber-100">
+                                            <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Look-Alike Alert</p>
+                                            <p className="text-xs font-black text-amber-900 uppercase">Dopamine / Dobutamine</p>
+                                            <p className="text-[9px] font-bold text-amber-500 mt-1 uppercase tracking-tight">Requires Double Sign-off</p>
+                                        </div>
+                                        <div className="p-5 bg-indigo-50 rounded-3xl border border-indigo-100">
+                                            <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Compliance Check</p>
+                                            <p className="text-xs font-black text-indigo-900 uppercase">Narcotic Audit Sync</p>
+                                            <p className="text-[9px] font-bold text-indigo-500 mt-1 uppercase tracking-tight">100% Verified Today</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="w-full md:w-64 space-y-4">
+                                    <div className="p-6 rounded-[2.5rem] bg-slate-900 text-white text-center">
+                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">Safety Score</p>
+                                        <div className="relative inline-flex items-center justify-center">
+                                            <svg className="w-32 h-32 transform -rotate-90">
+                                                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/10" />
+                                                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={364.4} strokeDashoffset={364.4 * 0.98} className="text-emerald-500" />
+                                            </svg>
+                                            <span className="absolute text-3xl font-black">98</span>
+                                        </div>
+                                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-4">Near-Zero Error Zone</p>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>

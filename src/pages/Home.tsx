@@ -50,13 +50,14 @@ const Home = () => {
         <Navbar />
       </div>
 
-      {/* Hero Section */}
+      <main className="flex-1">
+        {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-900 via-blue-800 to-cyan-700 text-white py-12 pt-16 md:pt-28 pb-0 relative overflow-hidden">
         <div className="healthcare-container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 min-h-[30rem]">
             <div className="w-full md:w-1/2 space-y-4 sm:space-y-6 text-center md:text-left z-20">
               <motion.h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
+                className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
@@ -112,7 +113,7 @@ const Home = () => {
               </motion.div>
             </div>
 
-            <div className="w-full md:w-1/2 relative h-[350px] sm:h-[450px] md:h-[550px] flex items-center justify-center">
+            <div className="w-full md:w-1/2 relative h-[300px] sm:h-[450px] md:h-[550px] flex items-center justify-center">
               {/* Aggressive Masking Container to fade all edges */}
               {/* Aggressive Masking Container to fade all edges */}
               <div
@@ -307,7 +308,7 @@ const Home = () => {
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {[
               {
                 title: "Regular Check-ups",
@@ -343,7 +344,7 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 whileHover={{ y: -10 }}
               >
-                <div className="aspect-[4/5] relative overflow-hidden">
+                <div className="aspect-[3/2] sm:aspect-[4/5] relative overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.title}
@@ -457,10 +458,17 @@ const Home = () => {
                   Access your healthcare information on the go. Available for iOS and Android.
                 </p>
                 <div className="flex gap-4 pt-4">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                    alt="App Store" className="h-10" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                    alt="Google Play" className="h-10" />
+                  <a href="#" className="transition-transform hover:scale-105 active:scale-95">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                      alt="App Store" className="h-10" />
+                  </a>
+                  <a href="https://play.google.com/store/apps/details?id=com.unlimitedhealthcares.app&pcampaignid=web_share" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="transition-transform hover:scale-105 active:scale-95">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                      alt="Google Play" className="h-10" />
+                  </a>
                 </div>
               </div>
               {/* <div className="bg-healthcare-100 flex items-center justify-center p-8">
@@ -474,6 +482,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
@@ -518,21 +528,21 @@ const Home = () => {
                 <div>
                   <h4 className="font-bold text-lg mb-4">Services</h4>
                   <ul className="space-y-3 text-gray-400">
-                    <li><a href="#" className="hover:text-white transition-colors">Find a Doctor</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Book Service</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Emergency Services</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Medical Records</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Telemedicine</a></li>
+                    <li><Link to="/discovery?type=doctor" className="hover:text-white transition-colors">Find a Doctor</Link></li>
+                    <li><Link to="/appointment" className="hover:text-white transition-colors">Book Service</Link></li>
+                    <li><Link to="/emergency" className="hover:text-white transition-colors">Emergency Services</Link></li>
+                    <li><Link to="/records" className="hover:text-white transition-colors">Medical Records</Link></li>
+                    <li><Link to="/video-conferences" className="hover:text-white transition-colors">Telemedicine</Link></li>
                   </ul>
                 </div>
                 <div>
                   <h4 className="font-bold text-lg mb-4">Resources</h4>
                   <ul className="space-y-3 text-gray-400">
-                    <li><a href="#" className="hover:text-white transition-colors">For Patients</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">For Doctors</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">For Facilities</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                    <li><Link to="/auth/register" className="hover:text-white transition-colors">For Patients</Link></li>
+                    <li><Link to="/auth/register?role=doctor" className="hover:text-white transition-colors">For Doctors</Link></li>
+                    <li><Link to="/auth/register?role=center" className="hover:text-white transition-colors">For Facilities</Link></li>
+                    <li><Link to="/support" className="hover:text-white transition-colors">Help Center</Link></li>
+                    <li><Link to="/community" className="hover:text-white transition-colors">Blog</Link></li>
                   </ul>
                 </div>
               </div>
@@ -543,11 +553,11 @@ const Home = () => {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-center">
                   <Phone className="h-5 w-5 mr-3 text-healthcare-500" />
-                  <span>+1 (555) 123-4567</span>
+                  <a href="tel:+2349157033159" className="hover:text-white transition-colors">+234 915 703 3159</a>
                 </li>
                 <li className="flex items-center">
                   <Mail className="h-5 w-5 mr-3 text-healthcare-500" />
-                  <span>contact@unlimitedhealthcare.com</span>
+                  <a href="mailto:codesphere@unlimitedhealthcares.com" className="hover:text-white transition-colors">codesphere@unlimitedhealthcares.com</a>
                 </li>
                 <li className="flex items-center">
                   <MapPin className="h-5 w-5 mr-3 text-healthcare-500" />
@@ -562,7 +572,7 @@ const Home = () => {
           </div>
         </div>
       </footer>
-    </div >
+    </div>
   );
 };
 

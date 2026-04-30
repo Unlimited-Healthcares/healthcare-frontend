@@ -977,6 +977,6 @@ export const AdminDashboard = () => {
         onClose={() => setIsAddUserModalOpen(false)}
         onSuccess={fetchDashboardData}
       />
-    </div >
+    </div>
   );
 };

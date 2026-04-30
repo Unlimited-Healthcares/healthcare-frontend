@@ -18,7 +18,7 @@ import {
     Stethoscope,
     ArrowRight
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { webauthnService } from '@/services/webauthnService';
 
 interface EOLConfirmation {
     doctor1: { id: string; name: string; verified: boolean; timestamp?: string };
@@ -41,19 +41,28 @@ export function EndOfLifeConfirmation({ patient, currentDoctor }: { patient: any
 
     const [isVerifying, setIsVerifying] = useState(false);
 
-    const handleBiometricSignOff = () => {
+    const handleBiometricSignOff = async () => {
         setIsVerifying(true);
-        // Simulate biometric/2FA verification
-        setTimeout(() => {
+        try {
+            // Initiate actual WebAuthn Biometric/Security Key verification
+            await webauthnService.authenticate(currentDoctor.id);
+            
             setConfirmation(prev => ({
                 ...prev,
                 doctor2: { ...prev.doctor2, verified: true, timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16) }
             }));
-            setIsVerifying(false);
             toast.success("Identity Verified", {
-                description: "Biometric sign-off recorded for Death Confirmation."
+                description: "Hardware-backed biometric sign-off recorded."
             });
-        }, 2000);
+        } catch (error: any) {
+            console.error('Biometric verification failed:', error);
+            toast.error("Verification Failed", {
+                description: error.message || "Hardware biometric challenge was not completed."
+            });
+            // Fallback for demo purposes if needed, but here we strictly enforce it
+        } finally {
+            setIsVerifying(false);
+        }
     };
 
     const handleFinalize = () => {

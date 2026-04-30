@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Truck, ShieldCheck, Clock, MapPin, X, Phone } from 'lucide-react';
+import { FileText, Truck, ShieldCheck, Clock, MapPin, X, Phone, Lock, Gavel, AlertTriangle } from 'lucide-react';
+import { MortuaryStatus } from '@/services/mortuaryService';
 import { cn } from '@/lib/utils';
 
 interface RemainsManagementModalProps {
@@ -29,16 +30,18 @@ export function RemainsManagementModal({ isOpen, onClose, remain, isAttendant }:
             <DialogContent className="sm:max-w-[500px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
                 <DialogHeader className={cn(
                     "p-6 text-white text-left relative",
-                    isReleased ? "bg-slate-800" : "bg-indigo-600"
+                    isReleased ? "bg-slate-800" : 
+                    remain.status === MortuaryStatus.LEGAL_HOLD ? "bg-rose-900" : "bg-indigo-600"
                 )}>
                     <div className="flex justify-between items-start">
                         <div>
                             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                                {isReleased ? <ShieldCheck className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                                {isReleased ? <ShieldCheck className="h-5 w-5" /> : 
+                                 remain.status === MortuaryStatus.LEGAL_HOLD ? <Gavel className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                                 Manage Remains
                             </DialogTitle>
                             <DialogDescription className="text-indigo-100 opacity-90 mt-1">
-                                {remain.id} · {remain.name}
+                                {remain.id} · {remain.deceasedName || remain.name}
                             </DialogDescription>
                         </div>
                     </div>
@@ -81,13 +84,12 @@ export function RemainsManagementModal({ isOpen, onClose, remain, isAttendant }:
                                     <ShieldCheck className="ml-auto h-4 w-4 text-emerald-500" />
                                 </Button>
                             ) : (
-                                <>
-                                    <Button
+                                <>                                     <Button
                                         variant="outline"
-                                        disabled={isAttendant}
+                                        disabled={isAttendant || remain.status === MortuaryStatus.LEGAL_HOLD}
                                         className={cn(
                                             "w-full justify-start gap-3 h-14 rounded-2xl border-gray-100 hover:bg-emerald-50 hover:border-emerald-100 transition-all group",
-                                            isAttendant && "opacity-50 grayscale cursor-not-allowed"
+                                            (isAttendant || remain.status === MortuaryStatus.LEGAL_HOLD) && "opacity-50 grayscale cursor-not-allowed"
                                         )}
                                     >
                                         <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
@@ -95,7 +97,23 @@ export function RemainsManagementModal({ isOpen, onClose, remain, isAttendant }:
                                         </div>
                                         <div className="text-left">
                                             <p className="text-sm font-bold">Authorize Release</p>
-                                            <p className="text-[10px] text-gray-500">Generate final clearance document</p>
+                                            <p className="text-[10px] text-gray-500">{remain.status === MortuaryStatus.LEGAL_HOLD ? "LOCKED: Legal Hold Active" : "Generate final clearance document"}</p>
+                                        </div>
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        className={cn(
+                                            "w-full justify-start gap-3 h-14 rounded-2xl border-gray-100 hover:bg-rose-50 hover:border-rose-100 transition-all group",
+                                            remain.status === MortuaryStatus.LEGAL_HOLD && "bg-rose-50 border-rose-200"
+                                        )}
+                                    >
+                                        <div className="h-8 w-8 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
+                                            <Lock className="h-4 w-4" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-sm font-bold">Legal / Coroner Hold</p>
+                                            <p className="text-[10px] text-gray-500">{remain.status === MortuaryStatus.LEGAL_HOLD ? "Case under active investigation" : "Flag for coroner or legal hold"}</p>
                                         </div>
                                     </Button>
 
@@ -118,23 +136,6 @@ export function RemainsManagementModal({ isOpen, onClose, remain, isAttendant }:
 
                                     <Button
                                         variant="outline"
-                                        disabled={isAttendant}
-                                        className={cn(
-                                            "w-full justify-start gap-3 h-14 rounded-2xl border-gray-100 hover:bg-indigo-50 hover:border-indigo-100 transition-all group",
-                                            isAttendant && "opacity-50 grayscale cursor-not-allowed"
-                                        )}
-                                    >
-                                        <div className="h-8 w-8 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                                            <MapPin className="h-4 w-4" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold">Update Storage Unit</p>
-                                            <p className="text-[10px] text-gray-500">Relocate to a different bin or freezer</p>
-                                        </div>
-                                    </Button>
-
-                                    <Button
-                                        variant="outline"
                                         className="w-full justify-start gap-3 h-14 rounded-2xl border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 transition-all group"
                                         onClick={() => window.location.href = `tel:${remain.representativePhone || '555-0199'}`}
                                     >
@@ -146,10 +147,23 @@ export function RemainsManagementModal({ isOpen, onClose, remain, isAttendant }:
                                             <p className="text-[10px] text-indigo-600 font-medium">{remain.representativeName || 'Contact Depositor'}</p>
                                         </div>
                                     </Button>
+
                                 </>
                             )}
                         </div>
                     </div>
+
+                    {remain.status === MortuaryStatus.LEGAL_HOLD && (
+                        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 flex items-start gap-3">
+                            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-xs font-bold text-rose-900">ACTIVE LEGAL HOLD</p>
+                                <p className="text-[10px] text-rose-700 leading-relaxed mt-0.5">
+                                    This case is subject to a legal or coroner's hold. Release is strictly prohibited until a formal clearance is received from the Legal Team or Hospital Administration.
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {remain.hasDoc && isReleased && (
                         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-start gap-3">

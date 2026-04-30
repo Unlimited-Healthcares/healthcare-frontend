@@ -6,6 +6,7 @@ export enum MortuaryStatus {
     PENDING_RELEASE = 'Pending Release',
     PENDING_AUTOPSY = 'Pending Autopsy',
     RELEASED = 'Released',
+    LEGAL_HOLD = 'Legal Hold',
 }
 
 export interface MortuaryRecord {

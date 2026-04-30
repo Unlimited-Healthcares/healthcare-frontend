@@ -75,9 +75,8 @@ export function AmbulanceMissionDashboard({ request, onBack, onUpdate }: Ambulan
                 bloodGlucose: parseFloat(vitals.bloodGlucose),
                 timestamp: new Date()
             };
-            await emergencyService.updateRequestStatus(request.id, { 
-                vitals: [...(request.vitals || []), newVitals],
-                mechanismOfInjury: mechanism
+            await emergencyService.updateClinicalData(request.id, { 
+                vitals: newVitals
             });
             toast.success("Vitals and Mechanism of Injury transmitted to ER");
             onUpdate();
@@ -89,8 +88,8 @@ export function AmbulanceMissionDashboard({ request, onBack, onUpdate }: Ambulan
     const handleLogMed = async (name: string, dosage: string) => {
         const newMed = { name, dosage, administeredBy: 'EMT Crew', timestamp: new Date() };
         try {
-            await emergencyService.updateRequestStatus(request.id, {
-                medsAdministered: [...(request.medsAdministered || []), newMed]
+            await emergencyService.updateClinicalData(request.id, {
+                interventions: [newMed]
             });
             setMedsLog(prev => [...prev, newMed]);
             toast.success(`Logged: ${name} ${dosage}`);

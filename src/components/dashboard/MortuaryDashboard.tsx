@@ -139,6 +139,8 @@ export function MortuaryDashboard({ centerId, centerName = "Mortuary Department"
                 return 'bg-amber-100 text-amber-700';
             case MortuaryStatus.PENDING_AUTOPSY:
                 return 'bg-blue-100 text-blue-700';
+            case MortuaryStatus.LEGAL_HOLD:
+                return 'bg-rose-100 text-rose-700 border border-rose-200';
             default:
                 return 'bg-gray-100 text-gray-700';
         }
@@ -354,6 +356,7 @@ export function MortuaryDashboard({ centerId, centerName = "Mortuary Department"
                                     <option value={MortuaryStatus.STORED}>Stored</option>
                                     <option value={MortuaryStatus.PENDING_RELEASE}>Pending Release</option>
                                     <option value={MortuaryStatus.PENDING_AUTOPSY}>Pending Autopsy</option>
+                                    <option value={MortuaryStatus.LEGAL_HOLD}>Legal Hold</option>
                                     <option value={MortuaryStatus.RELEASED}>Released</option>
                                 </select>
                                 <Button variant="outline" size="sm" className="rounded-xl border-slate-200">
