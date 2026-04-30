@@ -39,7 +39,7 @@ export function PharmacyInventoryHub() {
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const centerId = user?.centerId;
+    const centerId = (user as any)?.centerId;
 
     const fetchInventory = async () => {
         try {

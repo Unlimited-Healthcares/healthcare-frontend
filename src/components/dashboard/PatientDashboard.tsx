@@ -11,6 +11,7 @@ import { ApprovedCentersCard } from "@/components/dashboard/ApprovedCentersCard"
 import { ApprovedProvidersSummary } from "@/components/dashboard/ApprovedProvidersSummary";
 import { QuickActions } from "./QuickActions";
 import { useQuickActionHandler } from "@/hooks/useQuickActionHandler";
+import { FileText } from 'lucide-react';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { PatientPostDischargeHub } from './PatientPostDischargeHub';
 import { DigitalDeathCertificate } from './DigitalDeathCertificate';

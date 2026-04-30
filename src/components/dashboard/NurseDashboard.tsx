@@ -431,7 +431,7 @@ export const NurseDashboard = () => {
                     {selectedPatientId ? (
                         <DischargePlanner 
                             patient={patients.find(p => p.id === selectedPatientId) || { name: 'Unknown' }} 
-                            onComplete={() => setActiveTab('vitals')}
+                            role="nurse"
                         />
                     ) : (
                         <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">

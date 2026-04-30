@@ -463,7 +463,7 @@ export function DoctorDashboard() {
 
                 <TabsContent value="discharge">
                     {selectedPatientId ? (
-                        <DischargePlanner patientId={selectedPatientId} role="doctor" />
+                        <DischargePlanner patient={{ id: selectedPatientId, name: 'Selected Patient' }} role="doctor" />
                     ) : (
                         <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a patient to plan discharge</p>
@@ -477,7 +477,7 @@ export function DoctorDashboard() {
 
                 <TabsContent value="eol">
                     {selectedPatientId ? (
-                        <EndOfLifeConfirmation patientId={selectedPatientId} currentDoctor={user} />
+                        <EndOfLifeConfirmation patient={{ id: selectedPatientId, name: 'Selected Patient' }} currentDoctor={user} />
                     ) : (
                         <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a patient for EOL Protocol</p>

@@ -69,10 +69,10 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                 await mortuaryService.updateRecord(intake.id, data);
             } else {
                 const newRecord = await mortuaryService.createRecord(data);
-                setIntake(prev => ({ ...prev, id: newRecord.id }));
+                setIntake((prev: any) => ({ ...prev, id: newRecord.id }));
             }
 
-            setIntake(prev => ({ 
+            setIntake((prev: any) => ({ 
                 ...prev, 
                 status: 'COLLECTED', 
                 collectionTime: new Date().toISOString().replace('T', ' ').substring(0, 16) 
@@ -96,7 +96,7 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                 notes: `${intake.notes || ''}\nStored in ${intake.unit} at ${extra.temperature}°C. Coroner Case: ${extra.coronerCase}`
             });
             
-            setIntake(prev => ({ ...prev, status: 'STORED' }));
+            setIntake((prev: any) => ({ ...prev, status: 'STORED' }));
             toast.success("Storage Finalized", {
                 description: `Remains secured in ${intake.unit} at ${extra.temperature}°C.`
             });
