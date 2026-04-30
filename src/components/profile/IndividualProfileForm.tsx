@@ -86,6 +86,12 @@ const profileSchema = z.object({
   bloodPressure: z.string().optional().or(z.literal('')),
   allergies: z.string().optional().or(z.literal('')),
   chronicDisease: z.string().optional().or(z.literal('')),
+  currentMedications: z.string().optional().or(z.literal('')),
+  emergencyContacts: z.array(z.object({
+    name: z.string().min(1, 'Contact name is required'),
+    relationship: z.string().min(1, 'Relationship is required'),
+    phone: z.string().min(1, 'Phone number is required')
+  })).optional(),
   // Location
   location: z.object({
     city: z.string().optional().or(z.literal('')),
@@ -317,6 +323,9 @@ const IndividualProfileForm: React.FC<IndividualProfileFormProps> = ({
       genotype: profile?.genotype || '',
       height: profile?.height != null ? String(profile.height) : '',
       weight: profile?.weight != null ? String(profile.weight) : '',
+      chronicDisease: profile?.chronicDisease || '',
+      currentMedications: profile?.currentMedications || '',
+      emergencyContacts: profile?.emergencyContacts || [],
       location: {
         city: profile?.location?.city || '',
         state: profile?.location?.state || '',
@@ -910,6 +919,86 @@ const IndividualProfileForm: React.FC<IndividualProfileFormProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currentMedications">Current Medications</Label>
+                    <Textarea 
+                        id="currentMedications" 
+                        {...register('currentMedications')} 
+                        disabled={!isEditing} 
+                        className={!isEditing ? 'bg-gray-50' : ''} 
+                        placeholder="List any medications you are currently taking..." 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100 mt-4">
+                    <div className="flex items-center justify-between">
+                        <Label className="font-bold text-slate-800">Emergency Contacts</Label>
+                        {isEditing && (
+                            <Button 
+                                type="button" 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => {
+                                    const current = watch('emergencyContacts') || [];
+                                    setValue('emergencyContacts', [...current, { name: '', relationship: '', phone: '' }]);
+                                }}
+                                className="h-7 text-[10px] font-black uppercase tracking-widest border-blue-200 text-blue-600"
+                            >
+                                <Plus className="h-3 w-3 mr-1" /> Add Contact
+                            </Button>
+                        )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                        {(watch('emergencyContacts') || []).map((contact: any, index: number) => (
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 relative">
+                                {isEditing && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            const current = watch('emergencyContacts') || [];
+                                            setValue('emergencyContacts', current.filter((_: any, i: number) => i !== index));
+                                        }}
+                                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                )}
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] text-slate-500 uppercase font-bold">Name</Label>
+                                    <Input 
+                                        {...register(`emergencyContacts.${index}.name`)} 
+                                        disabled={!isEditing} 
+                                        className="h-8 text-xs" 
+                                        placeholder="Full Name" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] text-slate-500 uppercase font-bold">Relationship</Label>
+                                    <Input 
+                                        {...register(`emergencyContacts.${index}.relationship`)} 
+                                        disabled={!isEditing} 
+                                        className="h-8 text-xs" 
+                                        placeholder="e.g. Spouse" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] text-slate-500 uppercase font-bold">Phone</Label>
+                                    <Input 
+                                        {...register(`emergencyContacts.${index}.phone`)} 
+                                        disabled={!isEditing} 
+                                        className="h-8 text-xs" 
+                                        placeholder="Phone Number" 
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {(!watch('emergencyContacts') || watch('emergencyContacts')?.length === 0) && (
+                            <p className="text-[10px] text-slate-400 italic text-center py-2">No emergency contacts added.</p>
+                        )}
+                    </div>
                 </div>
               </>
             )}

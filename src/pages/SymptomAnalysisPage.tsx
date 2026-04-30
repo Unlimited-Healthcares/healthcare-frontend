@@ -37,7 +37,9 @@ import {
   ShoppingBag,
   Search,
   X,
+  Video,
 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import symptomAnalysisService, {
   TriageResult,
@@ -46,6 +48,9 @@ import symptomAnalysisService, {
 } from '@/services/symptomAnalysisService';
 import { emergencyService } from '@/services/emergencyService';
 import apiClient from '@/services/apiClient';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { VideoConferenceRoom } from '@/components/videoConferences/VideoConferenceRoom';
+import { VideoConferenceWebSocket } from '@/services/videoConferenceWebSocket';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -141,9 +146,9 @@ const TRIAGE_CONFIG: Record<TriageLevel, {
         key: 'doctor',
         primary: true,
         icon: <Calendar className="h-5 w-5" />,
-        label: 'Book a Doctor Appointment',
-        description: 'Select a healthcare center and book a consultation at your convenience.',
-        buttonLabel: 'Book Now',
+        label: 'Book General Practitioner Appointment',
+        description: 'Select a healthcare center and book a consultation with a General Practitioner (GP).',
+        buttonLabel: 'Book GP Now',
         buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100',
         path: '/centers',
       },
@@ -229,9 +234,9 @@ const TRIAGE_CONFIG: Record<TriageLevel, {
         key: 'emergency-dash',
         primary: false,
         icon: <Truck className="h-5 w-5" />,
-        label: 'Emergency Dashboard',
-        description: 'Alert your registered emergency contacts and medical team via the app.',
-        buttonLabel: 'Open Emergency Dashboard',
+        label: 'Emergency Services Dashboard',
+        description: 'Alert the ER MDT team, your emergency contacts, and the nearest hospital.',
+        buttonLabel: 'Initiate Emergency Services',
         buttonClass: 'bg-white border-2 border-red-200 text-red-700 hover:bg-red-50',
         path: '/emergency',
       },
@@ -593,6 +598,10 @@ const SymptomAnalysisPage: React.FC = () => {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
+  const [isEmergencyVideoOpen, setIsEmergencyVideoOpen] = useState(false);
+  const [ambulanceLocation, setAmbulanceLocation] = useState({ lat: 0, lng: 0 });
+  const [showGPSTracking, setShowGPSTracking] = useState(false);
+
   const addMessage = useCallback((role: 'user' | 'assistant', content: string) => {
     const msg: ChatMessage = { id: `${Date.now()}-${Math.random()}`, role, content, timestamp: new Date() };
     setMessages((prev) => prev.filter((m) => !m.isTyping).concat(msg));
@@ -651,6 +660,7 @@ const SymptomAnalysisPage: React.FC = () => {
         
         if (res.triageResult?.triageLevel === 'EMERGENCY') {
            toast.loading("EMERGENCY LEVEL DETECTED: Auto-dispatching ambulance...", { id: 'auto-dispatch' });
+           setShowGPSTracking(true);
            try {
                await emergencyService.requestAmbulance({
                    priority: 'critical' as any,
@@ -662,6 +672,11 @@ const SymptomAnalysisPage: React.FC = () => {
                    patientName: (profile as any)?.displayName || user?.name || 'Unknown Patient'
                });
                toast.success("Ambulance dispatched and ER pre-alert sent.", { id: 'auto-dispatch' });
+               
+               // Simulate Emergency Contact Notification
+               if ((profile as any)?.emergencyContacts?.length > 0) {
+                   toast.info(`Emergency contacts notified: ${(profile as any).emergencyContacts[0].name}`);
+               }
            } catch (e) {
                toast.error("Failed to auto-dispatch ambulance. PLEASE USE THE EMERGENCY BUTTON.", { id: 'auto-dispatch' });
            }
@@ -981,6 +996,85 @@ const SymptomAnalysisPage: React.FC = () => {
           </div>
         </div>
       </DashboardLayout>
+
+      {/* Emergency GPS Tracking Overlay */}
+      {showGPSTracking && (
+          <div className="fixed bottom-6 right-6 w-full max-w-sm z-40 animate-in slide-in-from-right duration-500">
+              <Card className="bg-slate-900 border-none shadow-2xl overflow-hidden rounded-[32px] ring-4 ring-red-500/20">
+                  <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white">Live Ambulance Dispatch</p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setShowGPSTracking(false)} className="text-white hover:bg-white/10 h-6 w-6">
+                          <X className="h-4 w-4" />
+                      </Button>
+                  </div>
+                  <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white shrink-0">
+                              <Truck className="h-6 w-6" />
+                          </div>
+                          <div>
+                              <p className="text-xs text-white font-black uppercase tracking-tight">ETA: 4 Minutes</p>
+                              <p className="text-[10px] text-white/60 font-bold">Unit 402 — Code Red En Route</p>
+                          </div>
+                      </div>
+                      
+                      <div className="h-32 bg-slate-800 rounded-2xl relative overflow-hidden flex items-center justify-center border border-white/5">
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent)]" />
+                          <div className="relative">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse" />
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border border-blue-500/30 rounded-full animate-ping" />
+                          </div>
+                          <p className="absolute bottom-3 left-0 right-0 text-center text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Live GPS Link Active</p>
+                      </div>
+
+                      <div className="pt-2">
+                          <Button 
+                            onClick={() => setIsEmergencyVideoOpen(true)}
+                            className="w-full h-12 bg-white text-slate-900 hover:bg-slate-100 font-black uppercase text-[10px] tracking-widest rounded-xl gap-2"
+                          >
+                              <Video className="h-4 w-4" /> Start MDT Call (Dr + Family)
+                          </Button>
+                      </div>
+                  </CardContent>
+              </Card>
+          </div>
+      )}
+
+      {/* Emergency Video MDT Modal */}
+      <Dialog open={isEmergencyVideoOpen} onOpenChange={setIsEmergencyVideoOpen}>
+          <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden bg-slate-950 border-none rounded-[40px]">
+              <VideoConferenceRoom 
+                  conference={{
+                      id: 'emergency-' + (sessionId || 'active'),
+                      title: 'EMERGENCY MDT: Critical Care Sync',
+                      type: 'emergency',
+                      status: 'active',
+                      participants: [
+                          { id: 'p1', conferenceId: 'emergency-' + (sessionId || 'active'), userId: 'dispatch-doc', userName: 'ER Dispatch Doctor', userRole: 'doctor', isHost: true, isCoHost: false, isMicrophoneEnabled: true, isCameraEnabled: true, isScreenSharing: false, isHandRaised: false, connectionStatus: 'connected' },
+                          { id: 'p2', conferenceId: 'emergency-' + (sessionId || 'active'), userId: 'patient-contact', userName: (profile as any)?.emergencyContacts?.[0]?.name || 'Emergency Contact', userRole: 'patient', isHost: false, isCoHost: false, isMicrophoneEnabled: true, isCameraEnabled: true, isScreenSharing: false, isHandRaised: false, connectionStatus: 'connected' }
+                      ],
+                      hostId: 'dispatch-doc',
+                      hostName: 'ER Dispatch Doctor',
+                      maxParticipants: 10,
+                      currentParticipants: 2,
+                      isRecordingEnabled: true,
+                      isRecording: true,
+                      waitingRoomEnabled: false,
+                      autoAdmitParticipants: true,
+                      muteParticipantsOnEntry: false,
+                      provider: 'webrtc',
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                  }}
+                  ws={null}
+                  onLeave={() => setIsEmergencyVideoOpen(false)}
+                  userId={user?.id || 'patient'}
+              />
+          </DialogContent>
+      </Dialog>
     </ProtectedRoute>
   );
 };

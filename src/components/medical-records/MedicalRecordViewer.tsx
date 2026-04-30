@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { medicalReportsService } from '@/services/medicalReportsService';
+import { useAuth } from '@/hooks/useAuth';
+import { Lock, AlertCircle } from 'lucide-react';
 
 interface MedicalRecord {
   id: string;
@@ -74,6 +76,82 @@ export function MedicalRecordViewer({
 }: MedicalRecordViewerProps) {
   const [activeTab, setActiveTab] = useState('details');
   const [isGenerating, setIsGenerating] = useState(false);
+  const { user, profile } = useAuth();
+
+  const userRoles = user?.roles || [];
+  const primaryRole = userRoles[0] || 'patient';
+
+  // Permission Matrix Logic
+  const checkAccess = () => {
+    const category = record.category?.toLowerCase();
+    
+    // Admin has broad access but cannot view audit logs in this viewer (per user rule)
+    if (userRoles.includes('admin' as any) && category === 'audit') return false;
+    if (userRoles.includes('admin' as any)) return true;
+
+    // Doctor: Full record with consent (consent is assumed for this demo/viewer logic)
+    // Cannot view admin audit logs
+    if (userRoles.includes('doctor' as any)) {
+      return category !== 'audit';
+    }
+
+    // Nurse: Full care plan, vitals, tasks. Cannot view Financial
+    if (userRoles.includes('nurse' as any)) {
+      return category !== 'financial';
+    }
+
+    // Pharmacist: Prescriptions, labs. Cannot view Psych/Genetic
+    if (userRoles.includes('pharmacist' as any)) {
+      const allowed = ['pharmacy', 'diagnostic', 'clinical']; // relevant labs/clinical
+      const forbidden = ['psychiatric', 'genetics'];
+      return !forbidden.includes(category) && (allowed.includes(category) || category === 'general');
+    }
+
+    // Biotech: Device logs, repair. Cannot view Psych, Diagnosis
+    if (userRoles.includes('biotech_engineer' as any)) {
+      return category === 'biotech';
+    }
+
+    // Mortuary: Deceased info, transport logs. Cannot view Living Clinical
+    if (userRoles.includes('mortuary' as any) || userRoles.includes('mortuary_specialist' as any)) {
+      return category === 'mortuary';
+    }
+
+    // Patient: Own record (checked via patientId)
+    if (userRoles.includes('patient' as any)) {
+      if (record.patientId !== profile?.id && record.patientId !== user?.id) return false;
+      // Cannot view device inventory (biotech)
+      return category !== 'biotech';
+    }
+
+    // Others: Only order related data
+    const orderCategories = ['order', 'billing', 'pharmacy_order'];
+    return orderCategories.includes(category);
+  };
+
+  const hasAccess = checkAccess();
+
+  if (!hasAccess) {
+    return (
+      <Card className="border-none shadow-xl bg-slate-50 overflow-hidden rounded-[2rem]">
+        <CardContent className="p-12 flex flex-col items-center text-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-white shadow-lg flex items-center justify-center text-red-500">
+            <Lock className="h-10 w-10" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Access Restricted</h2>
+            <p className="text-slate-500 font-medium max-w-md">
+              Your current role (<span className="text-slate-900 font-bold">{primaryRole.replace('_', ' ')}</span>) does not have authorization to view <span className="text-slate-900 font-bold">{record.category.replace('_', ' ')}</span> data for this patient.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl text-[10px] font-black text-amber-700 uppercase tracking-widest">
+            <AlertCircle className="h-3 w-3" />
+            Security Protocol: UHC-CORE-RBAC-01
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleDownloadPDF = async () => {
     try {

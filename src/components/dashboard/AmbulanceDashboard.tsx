@@ -24,8 +24,13 @@ import {
     AreaChart,
     Area
 } from 'recharts';
-import { ServiceManagement } from './ServiceManagement';
 import { FacilityManagement } from './FacilityManagement';
+import { EmergencySOS } from './EmergencySOS';
+import { AmbulanceMissionDashboard } from './AmbulanceMissionDashboard';
+import { DashboardTasks } from './DashboardTasks';
+import { ClinicalTimeline } from './ClinicalTimeline';
+import { DashboardAlerts } from './DashboardAlerts';
+import { ServiceManagement } from './ServiceManagement';
 
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EmergencyList } from '@/components/emergency/EmergencyList';
@@ -40,6 +45,7 @@ import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { FleetLiveMap } from '@/components/emergency/FleetLiveMap';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const activityData = [
     { name: 'Mon', count: 12 },
@@ -57,12 +63,14 @@ interface AmbulanceDashboardProps {
     centerName?: string;
 }
 
-export function AmbulanceDashboard({ centerId, centerName = "Ambulance Team" }: AmbulanceDashboardProps) {
+export function AmbulanceDashboard({ centerId, centerType, centerName }: AmbulanceDashboardProps) {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview');
     const [pendingRequests, setPendingRequests] = useState<AmbulanceRequest[]>([]);
     const [activeUnits, setActiveUnits] = useState<AmbulanceRequest[]>([]);
     const [staffMembers, setStaffMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [viewingMission, setViewingMission] = useState<AmbulanceRequest | null>(null);
     const { user } = useAuth();
     const { trackUserAction } = useAnalytics(centerId);
     const { profile, loading: loadingProfile } = useCenterProfile(centerId);
@@ -112,6 +120,16 @@ export function AmbulanceDashboard({ centerId, centerName = "Ambulance Team" }: 
     };
 
     const { handleQuickAction } = useQuickActionHandler();
+
+    if (viewingMission) {
+        return (
+            <AmbulanceMissionDashboard 
+                request={viewingMission} 
+                onBack={() => setViewingMission(null)} 
+                onUpdate={loadEmergencyData}
+            />
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -178,6 +196,44 @@ export function AmbulanceDashboard({ centerId, centerName = "Ambulance Team" }: 
                         </p>
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-12">
+                <div className="md:col-span-8 space-y-6">
+                    <DashboardTasks />
+                    <Card className="border-none shadow-sm rounded-[32px] overflow-hidden">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-100">
+                                    <Activity className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-sm font-black uppercase tracking-tight text-slate-900">Emergency Mission Timeline</CardTitle>
+                                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Dispatch Progression</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <ClinicalTimeline />
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="md:col-span-4 space-y-6">
+                    <DashboardAlerts />
+                    <div className="bg-gradient-to-br from-red-600 to-rose-700 rounded-[32px] p-6 text-white shadow-xl">
+                        <h3 className="text-lg font-black uppercase tracking-tight mb-2">ER MDT Escalation</h3>
+                        <p className="text-xs text-white/70 font-bold mb-6 leading-relaxed">Directly notify ER doctors and prepare teams for incoming critical patients.</p>
+                        <div className="space-y-3">
+                            <Button 
+                                onClick={() => navigate('/video-conferences')}
+                                className="w-full rounded-2xl py-6 bg-white/20 hover:bg-white/30 border-none text-white font-black uppercase tracking-widest text-xs gap-3"
+                            >
+                                <Users className="h-4 w-4" /> Relate ER MDT
+                            </Button>
+                            <EmergencySOS />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
@@ -251,7 +307,14 @@ export function AmbulanceDashboard({ centerId, centerName = "Ambulance Team" }: 
                                                 </div>
                                                 <div className="flex justify-between text-xs text-gray-500">
                                                     <span>{req.teamPersonnel?.map(p => p.name).join(', ') || 'Team Assigning...'}</span>
-                                                    <span className="font-medium text-red-600">{req.medicalCondition || req.patientName}</span>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => setViewingMission(req)}
+                                                        className="h-6 text-[9px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50"
+                                                    >
+                                                        Join Mission <ArrowUpRight className="h-3 w-3 ml-1" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ))

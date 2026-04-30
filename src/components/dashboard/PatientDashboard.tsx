@@ -12,6 +12,8 @@ import { ApprovedProvidersSummary } from "@/components/dashboard/ApprovedProvide
 import { QuickActions } from "./QuickActions";
 import { useQuickActionHandler } from "@/hooks/useQuickActionHandler";
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
+import { PatientPostDischargeHub } from './PatientPostDischargeHub';
+import { DigitalDeathCertificate } from './DigitalDeathCertificate';
 import { PremiumActionHub } from './PremiumActionHub';
 import { type ReactNode, useState, useId, type KeyboardEvent } from "react";
 
@@ -75,6 +77,8 @@ export function PatientDashboard() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl mb-6">
                     <TabsTrigger value="overview" className="rounded-lg px-8">Overview</TabsTrigger>
+                    <TabsTrigger value="recovery" className="rounded-lg px-8">Recovery Hub</TabsTrigger>
+                    <TabsTrigger value="eol_docs" className="rounded-lg px-8">EOL Documents</TabsTrigger>
                     <TabsTrigger value="appointments" className="rounded-lg px-8">Clinical Bookings</TabsTrigger>
                 </TabsList>
 
@@ -137,6 +141,14 @@ export function PatientDashboard() {
                             </MobileCollapsible>
                         </div>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="recovery" className="animate-in fade-in slide-in-from-right-4 duration-500">
+                    <PatientPostDischargeHub />
+                </TabsContent>
+
+                <TabsContent value="eol_docs">
+                    <DigitalDeathCertificate record={{ id: '8821', deceasedName: 'John Doe', intakeDate: 'April 29, 2026' }} />
                 </TabsContent>
 
                 <TabsContent value="appointments" className="animate-in fade-in slide-in-from-left-4 duration-500">

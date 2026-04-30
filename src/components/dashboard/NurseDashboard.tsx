@@ -14,7 +14,8 @@ import {
     FileText,
     Search,
     Shield,
-    Stethoscope
+    Stethoscope,
+    Video
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -41,6 +42,13 @@ import { careTaskService } from '@/services/careTaskService';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
 import { ServiceManagement } from './ServiceManagement';
+import { ClinicalTimeline } from './ClinicalTimeline';
+import { DashboardTasks } from './DashboardTasks';
+import { DashboardAlerts } from './DashboardAlerts';
+import { EmergencySOS } from './EmergencySOS';
+import { NurseVitalsMonitor } from './NurseVitalsMonitor';
+import { NurseMedicationModule } from './NurseMedicationModule';
+import { DischargePlanner } from './DischargePlanner';
 
 
 
@@ -124,8 +132,9 @@ export const NurseDashboard = () => {
                         lastUpdated: patientVitals?.createdAt ? new Date(patientVitals.createdAt).toLocaleTimeString() : 'No data'
                     },
                     tasks: patientTasks.length > 0 ? patientTasks : [
-                        { id: `t1-${p.id}`, title: "Morning Rounds", time: "08:00 AM", status: "pending" as const },
-                        { id: `t2-${p.id}`, title: "Vitals Check", time: "10:30 AM", status: "pending" as const }
+                        { id: `t1-${p.id}`, title: "Administer insulin (Aspart)", time: "07:00 AM", status: "pending" as const },
+                        { id: `t2-${p.id}`, title: "Assist Intubation (Bed 4)", time: "10:30 AM", status: "pending" as const },
+                        { id: `t3-${p.id}`, title: "Wound dressing (Sacral)", time: "14:00 PM", status: "pending" as const }
                     ]
                 };
             });
@@ -208,6 +217,7 @@ export const NurseDashboard = () => {
                         <Stethoscope className="h-4 w-4" />
                         {profile?.specialization ? 'Update Specialty' : 'Add Specialty'}
                     </Button>
+                    <EmergencySOS />
                 </div>
             </div>
 
@@ -275,12 +285,57 @@ export const NurseDashboard = () => {
                 </Card>
             </div>
 
+            <div className="grid gap-6 md:grid-cols-12">
+                <div className="md:col-span-8 space-y-6">
+                    <DashboardTasks />
+                    <Card className="border-none shadow-sm rounded-[32px] overflow-hidden">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-100">
+                                    <Activity className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-sm font-black uppercase tracking-tight text-slate-900">Clinical Event Timeline</CardTitle>
+                                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Care Lifecycle Progress</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <ClinicalTimeline />
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="md:col-span-4 space-y-6">
+                    <DashboardAlerts />
+                    <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-[32px] p-6 text-white shadow-xl">
+                        <h3 className="text-lg font-black uppercase tracking-tight mb-2">MDT Quick-Access</h3>
+                        <p className="text-xs text-white/70 font-bold mb-6 leading-relaxed">Collaborate with MDT members on shared clinical treatment plans.</p>
+                        <div className="space-y-3">
+                            <Button 
+                                onClick={() => navigate('/video-conferences')}
+                                className="w-full rounded-2xl py-6 bg-white/20 hover:bg-white/30 border-none text-white font-black uppercase tracking-widest text-xs gap-3"
+                            >
+                                <Video className="h-4 w-4" /> Start Video Consult
+                            </Button>
+                            <Button 
+                                onClick={() => navigate('/chat')}
+                                className="w-full rounded-2xl py-6 bg-white text-teal-700 hover:bg-teal-50 border-none font-black uppercase tracking-widest text-xs gap-3"
+                            >
+                                <Users className="h-4 w-4" /> Nurse MDT Chat
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl">
                     <TabsTrigger value="overview" className="rounded-lg px-6">Overview</TabsTrigger>
-                    <TabsTrigger value="monitoring" className="rounded-lg px-6">Monitoring</TabsTrigger>
+                    <TabsTrigger value="monitoring" className="rounded-lg px-6">Bedside Monitor</TabsTrigger>
+                    <TabsTrigger value="medications" className="rounded-lg px-6">Medication Admin</TabsTrigger>
+                    <TabsTrigger value="discharge" className="rounded-lg px-6">Discharge Tasks</TabsTrigger>
                     <TabsTrigger value="patients" className="rounded-lg px-6">Patient List</TabsTrigger>
-                    <TabsTrigger value="tasks" className="rounded-lg px-6">Care Tasks</TabsTrigger>
+                    <TabsTrigger value="tasks" className="rounded-lg px-6">Shift Tasks</TabsTrigger>
                     <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
                 </TabsList>
 
@@ -355,30 +410,32 @@ export const NurseDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="monitoring">
-                    <Card className="border-none shadow-sm rounded-2xl">
-                        <CardHeader>
-                            <CardTitle className="text-lg font-bold">Vitals Trend Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={patients.length > 0 ? (patients[0].vitals ? [
-                                        { time: '08:00', heartRate: 70, oxygen: 98 },
-                                        { time: '09:00', heartRate: 72, oxygen: 98 },
-                                        { time: '10:00', heartRate: 75, oxygen: 97 },
-                                        { time: '11:00', heartRate: 72, oxygen: 99 },
-                                    ] : []) : []}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="time" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Line type="monotone" dataKey="heartRate" stroke="#f43f5e" strokeWidth={2} dot={{ fill: '#f43f5e' }} />
-                                        <Line type="monotone" dataKey="oxygen" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
-                                    </LineChart>
-                                </ResponsiveContainer>
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Active Ward Monitoring</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Live Feed from Bedside Monitors & Wearables</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                            <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] tracking-widest px-4 py-1.5 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> SYSTEM SYNC: ACTIVE
+                            </Badge>
+                        </div>
+                        <NurseVitalsMonitor />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="medications">
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Medication Administration Queue</h3>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Scheduled Clinical Drug Delivery</p>
+                        </div>
+                        <NurseMedicationModule />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="discharge">
+                    <DischargePlanner patient={{ name: 'John Doe' }} role="nurse" />
                 </TabsContent>
 
                 <TabsContent value="patients">

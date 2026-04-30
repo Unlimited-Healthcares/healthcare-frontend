@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Activity,
     Clipboard,
@@ -12,7 +13,8 @@ import {
     FileText,
     ArrowUpRight,
     Search,
-    ExternalLink
+    ExternalLink,
+    FlaskConical
 } from 'lucide-react';
 import { useEncounters, usePrescriptions } from '@/hooks/useClinical';
 import {
@@ -26,10 +28,13 @@ import {
 } from 'recharts';
 import { PatientList } from './PatientList';
 import { MedicalRecords } from './MedicalRecords';
+import { FacilityManagement } from './FacilityManagement';
+import { Image as ImageIcon, Receipt, ShieldAlert, Zap, Truck } from 'lucide-react';
+import { ImagingMissionDashboard } from './ImagingMissionDashboard';
+import { LabMissionDashboard } from './LabMissionDashboard';
 import { DicomViewer } from './DicomViewer';
 import { ServiceManagement } from './ServiceManagement';
-import { FacilityManagement } from './FacilityManagement';
-import { Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { EnterpriseHeader } from './EnterpriseHeader';
 import { useCenterProfile } from '@/hooks/useCenterProfile';
@@ -61,6 +66,8 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
     const { user: currentUser } = useAuth();
     const [isResultModalOpen, setIsResultModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [viewingImagingMission, setViewingImagingMission] = useState<any>(null);
+    const [viewingLabMission, setViewingLabMission] = useState<any>(null);
 
     const handleRecordResult = (order?: any) => {
         setSelectedOrder(order);
@@ -70,8 +77,33 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
     // Live data fetching for professional stats
     const { data: encountersRes, isLoading: loadingEncounters } = useEncounters({ centerId });
 
-    // Safety check for data structure - handles both raw axios response and direct data
     const encounters = (encountersRes as any)?.data || (Array.isArray(encountersRes) ? encountersRes : []);
+
+    if (viewingImagingMission) {
+        return (
+            <ImagingMissionDashboard 
+                order={viewingImagingMission} 
+                onBack={() => setViewingImagingMission(null)} 
+                onComplete={() => {
+                    setViewingImagingMission(null);
+                    // Refresh data
+                }}
+            />
+        );
+    }
+
+    if (viewingLabMission) {
+        return (
+            <LabMissionDashboard 
+                order={viewingLabMission} 
+                onBack={() => setViewingLabMission(null)} 
+                onComplete={() => {
+                    setViewingLabMission(null);
+                    // Refresh data
+                }}
+            />
+        );
+    }
 
     const stats = [
         {
@@ -259,6 +291,7 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
                                                     {order.priority === 'Stroke' && <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Stroke Protocol</Badge>}
                                                     {order.priority === 'Trauma' && <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Trauma</Badge>}
                                                     {order.priority === 'Chest pain' && <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Chest Pain</Badge>}
+                                                    {order.priority === 'Urgent' && <Badge className="bg-red-500 text-white hover:bg-red-600 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">STAT / URGENT</Badge>}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
                                                     <span>{order.patient}</span> • <span>{order.id}</span> • <span>{order.time}</span>
@@ -269,18 +302,22 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
                                             <div className={`text-[10px] px-2 py-1 rounded-full font-bold ${order.status === 'Processing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
                                                 {order.status}
                                             </div>
-                                            <Button
-                                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs"
-                                                onClick={() => handleRecordResult({
-                                                    id: order.id,
-                                                    patientName: order.patient,
-                                                    serviceRequested: order.exam,
-                                                    category: order.type,
-                                                    priority: order.priority === 'Routine' ? 'normal' : 'high'
-                                                })}
-                                            >
-                                                Process & Acquire
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 text-[9px] font-black uppercase rounded-lg border-slate-200"
+                                                    onClick={() => toast.success("Receipt Generated & Sent to Patient")}
+                                                >
+                                                    <Receipt className="h-3 w-3 mr-1" /> Receipt
+                                                </Button>
+                                                <Button
+                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
+                                                    onClick={() => order.type === 'Imaging' ? setViewingImagingMission(order) : setViewingLabMission(order)}
+                                                >
+                                                    {order.type === 'Imaging' ? 'Process & Acquire' : 'Process Sample'}
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

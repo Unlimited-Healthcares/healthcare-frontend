@@ -41,6 +41,8 @@ import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { RemainsManagementModal } from './RemainsManagementModal';
 import { useAuth } from '@/hooks/useAuth';
+import { MortuaryIntakeManager } from './MortuaryIntakeManager';
+import { DigitalDeathCertificate } from './DigitalDeathCertificate';
 
 
 interface MortuaryDashboardProps {
@@ -604,6 +606,23 @@ export function MortuaryDashboard({ centerId, centerName = "Mortuary Department"
                 remain={selectedRemain}
                 isAttendant={isAttendant}
             />
+
+            {selectedRemain && (
+                <div className="mt-12 space-y-12 border-t border-slate-100 pt-12">
+                    <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-slate-50/50">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-black uppercase tracking-tight">Active Management: {selectedRemain.deceasedName}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 space-y-12">
+                            <MortuaryIntakeManager remain={selectedRemain} />
+                            <div className="border-t border-slate-100 pt-12">
+                                <h4 className="text-lg font-black uppercase tracking-tight mb-6">Legal & Documentation</h4>
+                                <DigitalDeathCertificate record={selectedRemain} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

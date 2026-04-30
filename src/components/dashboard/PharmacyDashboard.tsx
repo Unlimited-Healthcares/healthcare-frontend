@@ -33,6 +33,8 @@ import { QuickActions } from './QuickActions';
 import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
 import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { useAuth } from '@/hooks/useAuth';
+import { PharmacistVerificationHub } from './PharmacistVerificationHub';
+import { PharmacyInventoryHub } from './PharmacyInventoryHub';
 
 const activityData = [
     { name: 'Mon', count: 120 },
@@ -124,11 +126,10 @@ export function PharmacyDashboard({ centerId, centerType = 'pharmacy' }: Pharmac
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl">
                     <TabsTrigger value="overview" className="rounded-lg px-6">Overview</TabsTrigger>
-                    <TabsTrigger value="prescriptions" className="rounded-lg px-6">Prescriptions</TabsTrigger>
-                    <TabsTrigger value="inventory" className="rounded-lg px-6">Inventory</TabsTrigger>
+                    <TabsTrigger value="verification" className="rounded-lg px-6">Clinical Verification</TabsTrigger>
+                    <TabsTrigger value="prescriptions" className="rounded-lg px-6">Dispensing Queue</TabsTrigger>
+                    <TabsTrigger value="inventory" className="rounded-lg px-6">Inventory & Stock</TabsTrigger>
                     <TabsTrigger value="patients" className="rounded-lg px-6">Customers</TabsTrigger>
-                    <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
-
                     <TabsTrigger value="management" className="rounded-lg px-6">Management</TabsTrigger>
                 </TabsList>
 
@@ -194,19 +195,33 @@ export function PharmacyDashboard({ centerId, centerType = 'pharmacy' }: Pharmac
                     </div>
                 </TabsContent>
 
+                <TabsContent value="verification">
+                    <PharmacistVerificationHub />
+                </TabsContent>
+
                 <TabsContent value="prescriptions">
-                    <MedicalRecords userRole="center_staff" />
+                    <div className="space-y-6">
+                        <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[32px] flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Discharge Fulfillment</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Reviewing Discharge Plans • Digital Receipts • Delivery Logic</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button className="rounded-xl bg-white border-indigo-100 text-indigo-600 font-black text-[10px] uppercase tracking-widest h-10 px-6 border-2">Generate Digital Receipt</Button>
+                                <Button className="rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 shadow-lg shadow-indigo-100">Enable Home Delivery</Button>
+                            </div>
+                        </div>
+                        <MedicalRecords userRole="center_staff" />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="inventory">
+                    <PharmacyInventoryHub />
                 </TabsContent>
 
                 <TabsContent value="patients">
                     <PatientList />
                 </TabsContent>
-
-                <TabsContent value="services">
-                    <ServiceManagement centerId={centerId} centerType={centerType} />
-                </TabsContent>
-
-
 
                 <TabsContent value="management">
                     <FacilityManagement centerId={centerId} />

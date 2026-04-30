@@ -181,6 +181,33 @@ export interface AmbulanceRequest {
     group_number?: string;
   };
   teamPersonnel?: AmbulanceTeamMember[];
+  triageLevel?: 'red' | 'yellow' | 'green';
+  vitals?: {
+    hr?: number;
+    bp?: string;
+    spo2?: number;
+    gcs?: number;
+    bloodGlucose?: number;
+    temp?: number;
+    timestamp: Date;
+  }[];
+  mechanismOfInjury?: string;
+  sceneMedia?: string[];
+  liveEcgActive?: boolean;
+  medicalOrders?: {
+    id: string;
+    order: string;
+    orderedBy: string;
+    timestamp: Date;
+    status: 'pending' | 'completed' | 'declined';
+  }[];
+  medsAdministered?: {
+    name: string;
+    dosage: string;
+    administeredBy: string;
+    timestamp: Date;
+  }[];
+  preHospitalReportUrl?: string;
   patientConditionOnScene?: string;
   handoverDetails?: {
     facilityName: string;

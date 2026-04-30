@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { complianceApi } from '@/services/complianceApi';
+import { emergencyEscalation } from '@/services/emergencyEscalation';
 
 export const EmergencySOS: React.FC = () => {
     const { user, profile } = useAuth();
@@ -33,9 +34,9 @@ export const EmergencySOS: React.FC = () => {
             // 1. Gather Emergency Context
             const emergencyData = {
                 patientId: user?.id,
-                patientName: user?.name || profile?.displayName,
-                phoneNumber: profile?.phone || 'Not Registered',
-                location: profile?.location || 'Unknown Location (Registered)',
+                patientName: user?.name || (profile as any)?.displayName,
+                phoneNumber: (profile as any)?.phone || 'Not Registered',
+                location: (profile as any)?.location || 'Unknown Location (Registered)',
                 timestamp: new Date().toISOString(),
                 status: 'CRITICAL_SOS'
             };
@@ -46,9 +47,12 @@ export const EmergencySOS: React.FC = () => {
                 reason: 'Patient initiated SOS'
             });
 
-            // 3. Simulate Broadcast to Nearest Center
-            // In a real implementation, this would hit an endpoint that notifies relevant providers via WebSocket/Push
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // 3. Broadcast to Nearest Center & Notify ER MDT
+            await emergencyEscalation.triggerEmergency(
+                user?.id || 'anonymous',
+                (profile as any)?.location || { address: 'Registered Residence' },
+                (profile as any)?.phone || 'Not Registered'
+            );
 
             setStep('complete');
             toast.success("Emergency services have been notified. Stay where you are.");

@@ -38,6 +38,8 @@ import {
     Download,
     Dumbbell,
     CreditCard,
+    Image as ImageIcon,
+    AlertTriangle,
     Zap,
     Package,
     ShieldCheck,
@@ -131,6 +133,8 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
     const profile = authRecord.profile;
     const isBiotech = Array.isArray(profile?.roles) && profile?.roles.includes('biotech_engineer');
     const isAdmin = userRoles.includes('admin' as any);
+    const isRadiographer = userRoles.includes('radiographer' as any);
+    const isLabScientist = userRoles.includes('lab_scientist' as any);
 
     // Differentiate search based on the intent - use displayAction for more accurate context
     const actionLabel = (displayAction || '').toLowerCase();
@@ -263,7 +267,11 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
                 'connect colleague': { action: 'ClinicalRequest', category: 'connection', label: 'Connect Colleagues' },
                 'connect colleagues': { action: 'ClinicalRequest', category: 'connection', label: 'Connect Colleagues' },
                 'diagnostic request': { action: 'ClinicalRequest', category: 'diagnostic', label: 'Diagnostic Request' },
-                'ambulance / transfer': { action: 'ClinicalRequest', category: 'transfer', label: 'Ambulance & Transfer' },
+                'ambulance': { action: 'ClinicalRequest', category: 'transfer', label: 'Ambulance Service (Patient Movement)' },
+                'emergency': { action: 'Emergency', label: 'Emergency Services (ER MDT Alert)' },
+                'general practitioner': { action: 'Discovery', query: 'type=doctor&specialty=General Practitioner' },
+                'death certificate': { action: 'ClinicalRequest', category: 'death_certificate', label: 'Death Certificate' },
+                'discharge summary': { action: 'ClinicalRequest', category: 'discharge_summary', label: 'Discharge Summary' },
                 'connect biomedical engineer': { action: 'Discovery', query: 'type=biotech_engineer&specialty=Biotechnology' },
                 'prescribe special exercise': { action: 'ClinicalRequest', category: 'exercise', label: 'Exercise Prescription' },
                 'virtual inspection / call': { action: 'ClinicalRequest', category: 'call', label: 'Virtual Inspection' },
@@ -396,6 +404,21 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
                 return;
             case 'Review Prescription':
                 navigate('/clinical/me?tab=adherence');
+                return;
+            case 'Review':
+                if (onAction) onAction('Review');
+                return;
+            case 'Request':
+                if (onAction) onAction('Request');
+                return;
+            case 'Call a doctor':
+            case 'Call a Practitioner':
+                if (onAction) onAction('Call a doctor');
+                else navigate('/discovery?type=doctor');
+                return;
+            case 'Check symptoms':
+            case 'Check Symptoms':
+                navigate('/symptoms');
                 return;
             case 'View Collaboration Request':
                 navigate('/requests');
@@ -562,9 +585,9 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
 
     const actions = [
         // Workflow Actions (B2B/Providers)
-        { id: 'discovery', label: primaryRole === 'virologist' ? 'CONNECT PARTNERS' : primaryRole === 'mortuary' ? 'CORPSE DEPOSITOR REGISTRY' : ['doctor', 'nurse', 'staff', 'center_staff'].includes(primaryRole as string) ? 'FIND & REGISTER PATIENT' : 'Find & Connect', icon: Search, color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100', roles: ['doctor', 'nurse', 'pharmacy', 'center', 'diagnostic', 'maternity', 'staff', 'center_staff', 'mortuary', 'virologist'] },
-        { id: 'transferPatient', label: ['maternity', 'doctor', 'nurse', 'virologist'].some(r => userRoles.includes(r as any)) ? 'REFER PATIENT' : 'TRANSFER PATIENT', icon: ArrowLeftRight, color: 'bg-orange-50 text-orange-600 hover:bg-orange-100', roles: ['doctor', 'nurse', 'center', 'maternity', 'virologist'] },
-        { id: 'contact', label: 'CONNECT COLLEAGUES', icon: UserPlus, color: 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100', roles: ['doctor', 'nurse', 'pharmacy', 'diagnostic', 'maternity', 'staff', 'center_staff', 'virologist'] },
+        { id: 'discovery', label: primaryRole === 'virologist' ? 'CONNECT PARTNERS' : primaryRole === 'mortuary' ? 'CORPSE DEPOSITOR REGISTRY' : ['doctor', 'nurse', 'staff', 'center_staff', 'radiographer', 'lab_scientist'].includes(primaryRole as string) ? 'FIND & REGISTER PATIENT' : 'Find & Connect', icon: Search, color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100', roles: ['doctor', 'nurse', 'pharmacy', 'center', 'diagnostic', 'maternity', 'staff', 'center_staff', 'mortuary', 'virologist', 'radiographer', 'lab_scientist'] },
+        { id: 'transferPatient', label: ['maternity', 'doctor', 'nurse', 'virologist', 'radiographer', 'lab_scientist'].some(r => userRoles.includes(r as any)) ? 'REFER PATIENT' : 'TRANSFER PATIENT', icon: ArrowLeftRight, color: 'bg-orange-50 text-orange-600 hover:bg-orange-100', roles: ['doctor', 'nurse', 'center', 'maternity', 'virologist', 'radiographer', 'lab_scientist'] },
+        { id: 'contact', label: 'CONNECT COLLEAGUES', icon: UserPlus, color: 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100', roles: ['doctor', 'nurse', 'pharmacy', 'diagnostic', 'maternity', 'staff', 'center_staff', 'virologist', 'radiographer', 'lab_scientist'] },
         { id: 'offerService', label: 'Offer Service', icon: HeartHandshake, color: 'bg-purple-50 text-purple-600 hover:bg-purple-100', roles: ['doctor', 'nurse', 'center', 'biotech_engineer', 'allied_practitioner', 'virologist'] },
         { id: 'careTask', label: 'CLINICAL TREATMENT PLAN', icon: ClipboardList, color: 'bg-teal-50 text-teal-600 hover:bg-teal-100', roles: ['doctor', 'nurse', 'center', 'allied_practitioner', 'virologist'] },
         { id: 'createMedicalReport', label: 'MEDICAL REPORT', icon: FileText, color: 'bg-amber-50 text-amber-600 hover:bg-amber-100', roles: ['doctor', 'nurse', 'center', 'allied_practitioner', 'virologist'] },
@@ -586,7 +609,7 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         { id: 'ai-triage', label: 'AI Symptom Check', icon: Brain, color: 'bg-violet-50 text-violet-700 hover:bg-violet-100 ring-violet-200', roles: ['patient'] },
         { id: 'search-service', label: 'Search for Service', icon: Search, color: 'bg-teal-50 text-teal-700 hover:bg-teal-100 ring-teal-200', roles: ['patient'] },
         { id: 'appointments', label: 'Request Consultation', icon: Calendar, color: 'bg-blue-50 text-blue-600 hover:bg-blue-100', roles: ['patient'] },
-        { id: 'ambulance', label: (['center', 'hospital', 'pharmacy', 'diagnostic', 'fitness_center', 'staff', 'maternity'].some((r: any) => userRoles.includes(r as any))) ? 'CONNECT AMBULANCE TEAM' : 'Call Ambulance', icon: Truck, color: 'bg-red-50 text-red-600 hover:bg-red-100', roles: ['patient', 'doctor', 'staff', 'center_staff', 'diagnostic', 'fitness_center', 'maternity'] },
+        { id: 'ambulance', label: (['center', 'hospital', 'pharmacy', 'diagnostic', 'fitness_center', 'staff', 'maternity', 'radiographer', 'lab_scientist'].some((r: any) => userRoles.includes(r as any))) ? 'CONNECT AMBULANCE TEAM' : 'Call Ambulance', icon: Truck, color: 'bg-red-50 text-red-600 hover:bg-red-100', roles: ['patient', 'doctor', 'staff', 'center_staff', 'diagnostic', 'fitness_center', 'maternity', 'radiographer', 'lab_scientist'] },
         { id: 'surgery', label: 'Book a Surgery', icon: Activity, color: 'bg-rose-50 text-rose-600 hover:bg-rose-100', roles: ['patient'] },
         { id: 'teleconsult', label: primaryRole === 'mortuary' ? 'Call Corpse Depositor' : 'Call a Practitioner', icon: primaryRole === 'mortuary' ? Phone : Stethoscope, color: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100', roles: ['patient', 'mortuary'] },
         { id: 'diagnostics', label: ['center', 'maternity', 'hospital', 'diagnostic'].some(r => userRoles.includes(r as any)) ? 'DIAGNOSTIC & TEST REQUEST' : 'Diagnostic & Test Requests', icon: TestTube, color: 'bg-amber-50 text-amber-600 hover:bg-amber-100', roles: ['patient', 'doctor', 'nurse', 'center', 'maternity', 'hospital', 'diagnostic'] },
@@ -596,9 +619,12 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         { id: 'vision', label: 'GET EYE LENSES', icon: Eye, color: 'bg-purple-50 text-purple-600 hover:bg-purple-100', roles: ['patient'] },
         { id: 'care-worker', label: 'GET A CARE WORKER', icon: HeartHandshake, color: 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100', roles: ['patient'] },
         { id: 'volunteer', label: 'Voluntary Service', icon: HeartHandshake, color: 'bg-stone-50 text-stone-600 hover:bg-stone-100', roles: ['patient', 'staff', 'center_staff'] },
-        { id: 'dicom', label: 'DICOM VIEWER', icon: ScanLine, color: 'bg-slate-900 text-slate-100 hover:bg-slate-800', roles: ['patient', 'doctor', 'nurse', 'center'] },
-        { id: 'clinical-request', label: 'Initiate Medical Order', icon: FileText, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100', roles: ['doctor', 'nurse', 'practitioner', 'allied_practitioner'] },
+        { id: 'dicom', label: 'DICOM VIEWER', icon: ScanLine, color: 'bg-slate-900 text-slate-100 hover:bg-slate-800', roles: ['patient', 'doctor', 'nurse', 'center', 'radiographer', 'lab_scientist'] },
+        { id: 'clinical-request', label: 'Initiate Medical Order', icon: FileText, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100', roles: ['doctor', 'nurse', 'practitioner', 'allied_practitioner', 'radiographer', 'lab_scientist'] },
         { id: 'clinical-report', label: 'Diagnosis and prescription', icon: Activity, color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100', roles: ['doctor', 'center', 'hospital', 'allied_practitioner'] },
+        { id: 'book-attend', label: 'Book & Attend Appointment', icon: Calendar, color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100', roles: ['doctor', 'nurse', 'practitioner'] },
+        { id: 'mdt-plan', label: 'Create MDT Treatment Plan', icon: Users, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100', roles: ['doctor', 'nurse', 'practitioner'] },
+        { id: 'escalate', label: 'Escalate Clinical Case', icon: ShieldAlert, color: 'bg-red-50 text-red-700 hover:bg-red-100', roles: ['nurse', 'staff'] },
         { id: 'contact-biotech', label: 'CONNECT BIOMEDICAL ENGINEER', icon: Microscope, color: 'bg-teal-50 text-teal-600 hover:bg-teal-100', roles: ['doctor', 'nurse', 'staff', 'center_staff', 'fitness_center', 'center', 'virologist'] },
         { id: 'connect-research', label: 'CONNECT RESEARCH LAB', icon: Microscope, color: 'bg-blue-50 text-blue-600 hover:bg-blue-100', roles: ['virologist'] },
         { id: 'connect-diag', label: 'CONNECT DIAGNOSTIC CENTER', icon: Building, color: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100', roles: ['virologist'] },
@@ -644,6 +670,8 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         { id: 'rev-call', label: 'Call', icon: Phone },
         { id: 'rev-treatmentSchedule', label: 'Treatment Schedule', icon: Calendar },
         { id: 'rev-exercise', label: 'Exercise Prescriptions', icon: Dumbbell },
+        { id: 'rev-imaging', label: 'Imaging Orders', icon: ImageIcon },
+        { id: 'rev-lab', label: 'Lab Orders', icon: Microscope },
     ];
 
     const createItems = [
@@ -658,6 +686,10 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         { id: 'cre-treatment', label: 'Treatment', icon: Activity },
         { id: 'cre-treatmentSchedule', label: 'Treatment Schedule', icon: Calendar },
         { id: 'cre-diagnostic', label: 'Diagnostic Request', icon: Microscope },
+        { id: 'cre-ambulance', label: 'Ambulance Service (Movement)', icon: Truck },
+        { id: 'cre-emergency', label: 'Emergency Services (ER MDT)', icon: AlertTriangle },
+        { id: 'cre-deathCertificate', label: 'Death Certificate', icon: FileText },
+        { id: 'cre-dischargeSummary', label: 'Discharge Summary', icon: FileText },
         { id: 'cre-exportResult', label: 'Export Diagnostic Result', icon: Download },
         { id: 'cre-exercise', label: 'Prescribe Special Exercise', icon: Dumbbell },
         { id: 'cre-invoice', label: 'Generate Invoice', icon: CreditCard },
@@ -677,6 +709,8 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         { id: 'cre-procurement', label: 'Equipment procurement selection and technology planning', icon: ShoppingCart },
         { id: 'cre-documentation', label: 'Documentation and records', icon: FileText },
         { id: 'cre-upgrades', label: 'Upgrades and system integration', icon: RefreshCw },
+        { id: 'cre-imaging', label: 'Process Imaging / Acquire', icon: ImageIcon },
+        { id: 'cre-lab', label: 'Process Sample / Analysis', icon: Microscope },
     ];
 
     const isDiagnosticAccount = userRoles.includes('diagnostic' as any);
@@ -691,10 +725,19 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         if (isFitnessCenterAccount && ['rev-diagnosis', 'rev-treatment', 'rev-careTask', 'rev-prescriptions'].includes(item.id)) return false;
         // Fitness centers DO see exercises
         if (item.id === 'rev-exercise' && !isFitnessCenterAccount) return false;
-        // Mortuary attendants ONLY see Call
-        if (isMortuaryAccount && item.id !== 'rev-call') return false;
+        // Mortuary attendants ONLY see Call and Death Certificate
+        if (isMortuaryAccount && !['rev-call', 'rev-deathCertificate'].includes(item.id)) return false;
         // Biotech Engineers have no business with clinical Diagnosis or Prescriptions
         if (isBiotech && ['rev-diagnosis', 'rev-prescriptions'].includes(item.id)) return false;
+        
+        // Radiographer Specifics
+        if (isRadiographer && !['rev-imaging', 'rev-call', 'rev-referral'].includes(item.id)) return false;
+        if (item.id === 'rev-imaging' && !isRadiographer && !isDiagnosticAccount) return false;
+
+        // Lab Scientist Specifics
+        if (isLabScientist && !['rev-lab', 'rev-call', 'rev-referral'].includes(item.id)) return false;
+        if (item.id === 'rev-lab' && !isLabScientist && !isDiagnosticAccount) return false;
+
         return true;
     });
 
@@ -706,8 +749,8 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
         if (isFitnessCenterAccount && ['cre-diagnosis', 'cre-medicalReport', 'cre-prescription', 'cre-treatment', 'cre-careTask'].includes(item.id)) return false;
         // Fitness centers DO create exercise prescriptions
         if (item.id === 'cre-exercise' && !isFitnessCenterAccount) return false;
-        // Mortuary attendants ONLY create Call (scheduling)
-        if (isMortuaryAccount && item.id !== 'cre-call') return false;
+        // Mortuary attendants ONLY create Call (scheduling) and Death Certificate
+        if (isMortuaryAccount && !['cre-call', 'cre-deathCertificate'].includes(item.id)) return false;
         // Biotech Engineers don't create clinical diagnoses, medical reports, or prescriptions
         if (isBiotech && ['cre-diagnosis', 'cre-prescription', 'cre-medicalReport'].includes(item.id)) return false;
 
@@ -717,6 +760,14 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
 
         const biotechOnly = ['cre-installation', 'cre-maintenance', 'cre-safety', 'cre-support', 'cre-training', 'cre-procurement', 'cre-documentation', 'cre-upgrades'];
         if (biotechOnly.includes(item.id) && !isBiotech) return false;
+
+        // Radiographer Specifics
+        if (isRadiographer && !['cre-imaging', 'cre-call', 'cre-referral', 'cre-invoice'].includes(item.id)) return false;
+        if (item.id === 'cre-imaging' && !isRadiographer && !isDiagnosticAccount) return false;
+
+        // Lab Scientist Specifics
+        if (isLabScientist && !['cre-lab', 'cre-call', 'cre-referral', 'cre-invoice'].includes(item.id)) return false;
+        if (item.id === 'cre-lab' && !isLabScientist && !isDiagnosticAccount) return false;
 
         return true;
     });

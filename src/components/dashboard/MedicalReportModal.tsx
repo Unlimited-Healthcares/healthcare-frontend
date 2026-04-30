@@ -31,12 +31,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { medicalReportsService } from '@/services/medicalReportsService';
+import { auditService } from '@/services/auditService';
 import { notificationService } from '@/services/notificationService';
+import { cn } from "@/lib/utils";
 
 interface MedicalReportModalProps {
     isOpen: boolean;
@@ -95,6 +98,16 @@ export const MedicalReportModal: React.FC<MedicalReportModalProps> = ({
         reportingClinician: (profile as any)?.displayName || user?.name || user?.email || 'Authorized Clinician',
         designation: (user?.roles?.[0])?.toUpperCase() || 'Medical Practitioner',
         licenseNo: profile?.id?.substring(0, 8).toUpperCase() || 'LIC-SYNC-ACTIVE',
+
+        // Death Certificate Specific
+        timeOfDeath: '',
+        causeOfDeath: '',
+        placeOfDeath: '',
+
+        // Discharge Summary Specific
+        dateOfAdmission: '',
+        dateOfDischarge: '',
+        hospitalCourse: '',
 
         // Clinical Content
         chiefComplaint: '',
@@ -225,6 +238,16 @@ export const MedicalReportModal: React.FC<MedicalReportModalProps> = ({
                         bmi: formData.bmi,
                         spo2: formData.spo2
                     },
+                    mortality: formData.reportType === 'Death Certificate' ? {
+                        time: formData.timeOfDeath,
+                        cause: formData.causeOfDeath,
+                        place: formData.placeOfDeath
+                    } : undefined,
+                    discharge: formData.reportType === 'Discharge Summary' ? {
+                        admission: formData.dateOfAdmission,
+                        discharge: formData.dateOfDischarge,
+                        course: formData.hospitalCourse
+                    } : undefined,
                     investigations: {
                         lab: formData.labTests,
                         imaging: formData.imagingStudies
@@ -425,7 +448,21 @@ export const MedicalReportModal: React.FC<MedicalReportModalProps> = ({
                                             </div>
                                             <div>
                                                 <Label className={labelClasses}>Report Type</Label>
-                                                <Input id="reportType" value={formData.reportType} onChange={handleInputChange} className={inputClasses} />
+                                                <Select
+                                                    value={formData.reportType}
+                                                    onValueChange={(val) => setFormData(prev => ({ ...prev, reportType: val }))}
+                                                >
+                                                    <SelectTrigger className={inputClasses}>
+                                                        <SelectValue placeholder="Select Report Type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="General Assessment">General Assessment</SelectItem>
+                                                        <SelectItem value="Discharge Summary">Discharge Summary</SelectItem>
+                                                        <SelectItem value="Death Certificate">Death Certificate</SelectItem>
+                                                        <SelectItem value="Specialist Referral">Specialist Referral</SelectItem>
+                                                        <SelectItem value="Diagnostic Report">Diagnostic Report</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                             <div>
                                                 <Label className={labelClasses}>Referring Physician</Label>
@@ -439,6 +476,57 @@ export const MedicalReportModal: React.FC<MedicalReportModalProps> = ({
                                                 <Label className={labelClasses}>Reporting Clinician</Label>
                                                 <Input id="reportingClinician" value={formData.reportingClinician} onChange={handleInputChange} className={inputClasses + " bg-emerald-50/50"} />
                                             </div>
+                                    
+                                    {/* Section 2.5: Specialized Clinical Protocols (Conditional) */}
+                                    {formData.reportType === 'Death Certificate' && (
+                                        <div className={cn(sectionClasses, "border-rose-200 bg-rose-50/10")}>
+                                            <div className="flex items-center gap-3 border-b border-rose-100 pb-4 mb-4">
+                                                <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                                                    <AlertCircle className="h-4 w-4" />
+                                                </div>
+                                                <h3 className="text-xs font-black text-rose-900 uppercase tracking-[0.2em]">MORTALITY REPORTING PROTOCOL</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <Label className={labelClasses}>Time of Death</Label>
+                                                    <Input id="timeOfDeath" type="time" value={formData.timeOfDeath} onChange={handleInputChange} className={inputClasses + " border-rose-200"} />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <Label className={labelClasses}>Place of Death</Label>
+                                                    <Input id="placeOfDeath" value={formData.placeOfDeath} onChange={handleInputChange} className={inputClasses + " border-rose-200"} placeholder="Facility, Ward, or Location address" />
+                                                </div>
+                                                <div className="md:col-span-3">
+                                                    <Label className={labelClasses}>Immediate Cause of Death</Label>
+                                                    <Textarea id="causeOfDeath" value={formData.causeOfDeath} onChange={handleInputChange} className={textareaClasses + " border-rose-100 min-h-[100px]"} placeholder="Document clinical cause of mortality..." />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.reportType === 'Discharge Summary' && (
+                                        <div className={cn(sectionClasses, "border-emerald-200 bg-emerald-50/10")}>
+                                            <div className="flex items-center gap-3 border-b border-emerald-100 pb-4 mb-4">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                </div>
+                                                <h3 className="text-xs font-black text-emerald-900 uppercase tracking-[0.2em]">HOSPITAL DISCHARGE PROTOCOL</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <Label className={labelClasses}>Date of Admission</Label>
+                                                    <Input id="dateOfAdmission" type="date" value={formData.dateOfAdmission} onChange={handleInputChange} className={inputClasses + " border-emerald-200"} />
+                                                </div>
+                                                <div>
+                                                    <Label className={labelClasses}>Date of Discharge</Label>
+                                                    <Input id="dateOfDischarge" type="date" value={formData.dateOfDischarge} onChange={handleInputChange} className={inputClasses + " border-emerald-200"} />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <Label className={labelClasses}>Summary of Hospital Course</Label>
+                                                    <Textarea id="hospitalCourse" value={formData.hospitalCourse} onChange={handleInputChange} className={textareaClasses + " border-emerald-100"} placeholder="Comprehensive summary of clinical journey during stay..." />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                             <div>
                                                 <Label className={labelClasses}>Designation</Label>
                                                 <Input id="designation" value={formData.designation} onChange={handleInputChange} className={inputClasses} />

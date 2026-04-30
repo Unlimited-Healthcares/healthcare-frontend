@@ -118,7 +118,7 @@ export function FilesManagement({ centerId, patientId }: FilesManagementProps) {
       }
       
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !centerId) return;
 
       const { data, error } = await supabase
         .from('center_staff')
@@ -139,6 +139,7 @@ export function FilesManagement({ centerId, patientId }: FilesManagementProps) {
   const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
+      if (!centerId) return;
       const filesData = await centerManagementService.getFiles({
         center_id: centerId,
         patient_id: patientId
@@ -255,7 +256,7 @@ export function FilesManagement({ centerId, patientId }: FilesManagementProps) {
   };
 
   const handleUploadFile = async (data: z.infer<typeof fileFormSchema>) => {
-    if (!uploadedFile || !staffId) return;
+    if (!uploadedFile || !staffId || !centerId) return;
 
     try {
       const fileData: CenterFileFormData = {

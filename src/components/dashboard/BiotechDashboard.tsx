@@ -38,6 +38,8 @@ import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
 import { ServiceManagement } from './ServiceManagement';
 
 import { discoveryService } from '@/services/discoveryService';
+import { BiotechDeviceRegistry } from './BiotechDeviceRegistry';
+import { BiotechMaintenanceHub } from './BiotechMaintenanceHub';
 
 interface DashboardStats {
     activeProjects: number;
@@ -256,11 +258,10 @@ export function BiotechDashboard() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl w-full sm:w-auto overflow-x-auto overflow-y-hidden">
                     <TabsTrigger value="overview" className="rounded-lg px-6">Service Overview</TabsTrigger>
-                    <TabsTrigger value="work-orders" className="rounded-lg px-6">Work Orders</TabsTrigger>
-                    <TabsTrigger value="fleet" className="rounded-lg px-6">Equipment Fleet</TabsTrigger>
-                    <TabsTrigger value="logs" className="rounded-lg px-6">Technical Logs</TabsTrigger>
-                    <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
-                    <TabsTrigger value="settings" className="rounded-lg px-6">Configuration</TabsTrigger>
+                    <TabsTrigger value="fleet" className="rounded-lg px-6">Device Fleet</TabsTrigger>
+                    <TabsTrigger value="work-orders" className="rounded-lg px-6">Maintenance Hub</TabsTrigger>
+                    <TabsTrigger value="services" className="rounded-lg px-6">Service Listings</TabsTrigger>
+                    <TabsTrigger value="settings" className="rounded-lg px-6">System Config</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-4">
@@ -337,35 +338,12 @@ export function BiotechDashboard() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="work-orders">
-                    <Card className="border-none shadow-sm rounded-2xl">
-                        <CardHeader>
-                            <CardTitle>Biological Data Streams</CardTitle>
-                            <CardDescription>Real-time processing of high-throughput data</CardDescription>
-                        </CardHeader>
-                        <CardContent className="h-[400px] flex items-center justify-center text-gray-400 italic">
-                            <div className="flex flex-col items-center gap-4">
-                                <Activity className="h-12 w-12 text-gray-300" />
-                                <p>No active data streams detected.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
                 <TabsContent value="fleet">
-                    <div className="flex flex-col items-center justify-center p-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-center">
-                        <Cpu className="h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-600">No connected devices</h3>
-                        <p className="text-sm text-gray-400">Pair your bio-sequences and analytical nodes to monitor fleet health.</p>
-                    </div>
+                    <BiotechDeviceRegistry />
                 </TabsContent>
 
-                <TabsContent value="logs">
-                    <div className="flex flex-col items-center justify-center p-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                        <FileText className="h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-600">No recent result logs</h3>
-                        <p className="text-sm text-gray-400">Records of completed analyses will appear here.</p>
-                    </div>
+                <TabsContent value="work-orders">
+                    <BiotechMaintenanceHub />
                 </TabsContent>
 
                 <TabsContent value="services">

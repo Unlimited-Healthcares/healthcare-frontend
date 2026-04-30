@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { patientService, PatientRecord } from "@/services/patientService";
 import { medicalReportsService } from "@/services/medicalReportsService";
 import { appointmentService } from "@/services/appointmentService";
+import { auditService } from "@/services/auditService";
 import {
   Card,
   CardContent,
@@ -40,6 +41,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Lock } from "lucide-react";
 
 interface Patient extends PatientRecord {
   // name is now fullName from PatientRecord
@@ -80,6 +83,8 @@ interface Appointment {
 
 export const PatientRecords = () => {
   const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const userRoles = user?.roles || [];
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
 
@@ -103,7 +108,25 @@ export const PatientRecords = () => {
   }, [searchTerm]);
 
   const handlePatientSelect = (patient: PatientRecord) => {
+    // Role-based visibility check for selection
+    const userRoles = user?.roles || [];
+    if (userRoles.includes('patient' as any) && patient.id !== profile?.id && patient.id !== user?.id) {
+      toast({
+        title: "Access Denied",
+        description: "You can only view your own records.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSelectedPatient(patient);
+    
+    // AUDIT LOG: View Patient Record
+    auditService.logAction('VIEW_PATIENT_RECORD', patient.id, {
+        patientName: patient.fullName,
+        practitionerId: user?.id
+    });
+
     toast({
       title: "Patient selected",
       description: `Viewing records for ${patient.fullName || 'Patient'}`,
@@ -185,7 +208,15 @@ export const PatientRecords = () => {
                   <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
                 </div>
               ) : patients.length > 0 ? (
-                patients.map(patient => (
+                patients
+                  .filter(p => {
+                    const userRoles = user?.roles || [];
+                    if (userRoles.includes('patient' as any)) {
+                      return p.id === profile?.id || p.id === user?.id;
+                    }
+                    return true;
+                  })
+                  .map(patient => (
                   <div
                     key={patient.id}
                     className={`p-3 border rounded-md cursor-pointer transition-colors ${selectedPatient?.id === patient.id
@@ -231,22 +262,28 @@ export const PatientRecords = () => {
               <CardContent>
                 <Tabs defaultValue="records">
                   <TabsList className="mb-4">
-                    <TabsTrigger value="records">
-                      <FileText className="h-4 w-4 mr-1" />
-                      Medical Records
-                    </TabsTrigger>
-                    <TabsTrigger value="medications">
-                      <Pill className="h-4 w-4 mr-1" />
-                      Medications
-                    </TabsTrigger>
+                    {(userRoles.includes('admin' as any) || userRoles.includes('doctor' as any) || userRoles.includes('nurse' as any) || userRoles.includes('pharmacist' as any) || userRoles.includes('patient' as any)) && (
+                      <TabsTrigger value="records">
+                        <FileText className="h-4 w-4 mr-1" />
+                        Medical Records
+                      </TabsTrigger>
+                    )}
+                    {(userRoles.includes('admin' as any) || userRoles.includes('doctor' as any) || userRoles.includes('nurse' as any) || userRoles.includes('pharmacist' as any) || userRoles.includes('patient' as any)) && (
+                      <TabsTrigger value="medications">
+                        <Pill className="h-4 w-4 mr-1" />
+                        Medications
+                      </TabsTrigger>
+                    )}
                     <TabsTrigger value="appointments">
                       <Calendar className="h-4 w-4 mr-1" />
                       Appointments
                     </TabsTrigger>
-                    <TabsTrigger value="vitals">
-                      <Activity className="h-4 w-4 mr-1" />
-                      Vitals HUD
-                    </TabsTrigger>
+                    {(userRoles.includes('admin' as any) || userRoles.includes('doctor' as any) || userRoles.includes('nurse' as any) || userRoles.includes('patient' as any)) && (
+                      <TabsTrigger value="vitals">
+                        <Activity className="h-4 w-4 mr-1" />
+                        Vitals HUD
+                      </TabsTrigger>
+                    )}
                   </TabsList>
 
                   <TabsContent value="records">

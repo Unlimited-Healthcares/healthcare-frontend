@@ -17,7 +17,8 @@ import {
     Star,
     Shield,
     Cpu,
-    Stethoscope
+    Stethoscope,
+    Video
 } from 'lucide-react';
 import { cn, getLicenseStatus } from '@/lib/utils';
 import {
@@ -40,7 +41,14 @@ import { HealthRecordsCard } from './HealthRecordsCard';
 import { AppointmentsCard } from './AppointmentsCard';
 import { SpecialtyUpdateModal } from './SpecialtyUpdateModal';
 import { ServiceManagement } from './ServiceManagement';
-
+import { ClinicalTimeline } from './ClinicalTimeline';
+import { DashboardTasks } from './DashboardTasks';
+import { DashboardAlerts } from './DashboardAlerts';
+import { EmergencySOS } from './EmergencySOS';
+import { PhysicianPatientHub } from './PhysicianPatientHub';
+import { DischargePlanner } from './DischargePlanner';
+import { PatientPostDischargeHub } from './PatientPostDischargeHub';
+import { EndOfLifeConfirmation } from './EndOfLifeConfirmation';
 import { useAuth } from '@/hooks/useAuth';
 import { QuickActions } from './QuickActions';
 import { useQuickActionHandler } from '@/hooks/useQuickActionHandler';
@@ -59,6 +67,7 @@ export function DoctorDashboard() {
     const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>();
     const navigate = useNavigate();
     const { profile, user } = useAuth();
+    const [viewingPatientHub, setViewingPatientHub] = useState<any>(null);
     const displayName = profile?.name || user?.name || 'Doctor';
 
     const { handleQuickAction } = useQuickActionHandler();
@@ -79,6 +88,15 @@ export function DoctorDashboard() {
         satisfaction: '4.9'
     });
     const [statsLoading, setStatsLoading] = useState(true);
+
+    if (viewingPatientHub) {
+        return (
+            <PhysicianPatientHub 
+                patient={viewingPatientHub} 
+                onBack={() => setViewingPatientHub(null)} 
+            />
+        );
+    }
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -113,18 +131,24 @@ export function DoctorDashboard() {
     }, []);
 
     const onDashboardAction = async (action: string, data?: any) => {
-        if (action === 'ClinicalRequest') {
+        if (action === 'ClinicalRequest' || action === 'Request') {
             setSelectedPatient(data?.patient || null);
             if (data?.category) {
                 setPreselectedCategory(data.category);
             }
             setIsRequestModalOpen(true);
-        } else if (action === 'ClinicalReport') {
+        } else if (action === 'ClinicalReport' || action === 'Review') {
             setSelectedPatient(data?.patient || null);
             setIsReportModalOpen(true);
+        } else if (action === 'Call a Practitioner' || action === 'Call a doctor') {
+            navigate('/discovery?type=doctor');
+        } else if (action === 'ViewHistory' || action === 'OpenHub') {
+            setViewingPatientHub(data?.patient || data);
+        } else if (action === 'Escalate') {
+            toast.warning(`ESCALATION: Emergency page sent to Dr. ${displayName}`, {
+                description: `Patient ${data?.patientName} stability concern: ${data?.reason || 'Critical decline'}`
+            });
         } else if (action === 'ViewHistory') {
-            setSelectedPatientId(data?.patient?.id);
-            setActiveTab('records');
         } else if (action.startsWith('Create ') || action === 'Refer Patient' || action === 'Initiate Medical Order') {
             const cleanAction = action.replace('Create ', '').replace('Initiate ', '').replace(' Order', '').trim();
             const clinicalMap: Record<string, string> = {
@@ -220,6 +244,7 @@ export function DoctorDashboard() {
                         <Stethoscope className="h-4 w-4" />
                         {profile?.specialization ? 'Update Specialty' : 'Add Specialty'}
                     </Button>
+                    <EmergencySOS />
                 </div>
             </div>
 
@@ -312,6 +337,49 @@ export function DoctorDashboard() {
                 </Card>
             </div>
 
+            <div className="grid gap-6 md:grid-cols-12">
+                <div className="md:col-span-8 space-y-6">
+                    <DashboardTasks />
+                    <Card className="border-none shadow-sm rounded-[32px] overflow-hidden">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
+                                    <Activity className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-sm font-black uppercase tracking-tight text-slate-900">Clinical Event Timeline</CardTitle>
+                                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Patient Journey</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <ClinicalTimeline />
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="md:col-span-4 space-y-6">
+                    <DashboardAlerts />
+                    <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[32px] p-6 text-white shadow-xl">
+                        <h3 className="text-lg font-black uppercase tracking-tight mb-2">MDT Quick-Access</h3>
+                        <p className="text-xs text-white/70 font-bold mb-6 leading-relaxed">Initiate or join multi-person video consultations with specialized departments.</p>
+                        <div className="space-y-3">
+                            <Button 
+                                onClick={() => navigate('/video-conferences')}
+                                className="w-full rounded-2xl py-6 bg-white/20 hover:bg-white/30 border-none text-white font-black uppercase tracking-widest text-xs gap-3"
+                            >
+                                <Video className="h-4 w-4" /> Start Video Consult
+                            </Button>
+                            <Button 
+                                onClick={() => navigate('/chat')}
+                                className="w-full rounded-2xl py-6 bg-white text-blue-700 hover:bg-blue-50 border-none font-black uppercase tracking-widest text-xs gap-3"
+                            >
+                                <Users className="h-4 w-4" /> MDT Group Chat
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList className="bg-gray-100/50 p-1 rounded-xl">
                     <TabsTrigger value="overview" className="rounded-lg px-6">Overview</TabsTrigger>
@@ -319,6 +387,9 @@ export function DoctorDashboard() {
                     <TabsTrigger value="colleagues" className="rounded-lg px-6">Colleagues</TabsTrigger>
                     <TabsTrigger value="appointments" className="rounded-lg px-6">Schedule</TabsTrigger>
                     <TabsTrigger value="records" className="rounded-lg px-6">Records</TabsTrigger>
+                    <TabsTrigger value="discharge" className="rounded-lg px-6">Discharge Planner</TabsTrigger>
+                    <TabsTrigger value="recovery" className="rounded-lg px-6">Recovery Support</TabsTrigger>
+                    <TabsTrigger value="eol" className="rounded-lg px-6">EOL Protocol</TabsTrigger>
                     <TabsTrigger value="imaging" className="rounded-lg px-6">Imaging</TabsTrigger>
                     <TabsTrigger value="services" className="rounded-lg px-6">Services</TabsTrigger>
                     <TabsTrigger value="analytics" className="rounded-lg px-6">Analytics</TabsTrigger>
@@ -388,6 +459,18 @@ export function DoctorDashboard() {
                         patientId={selectedPatientId}
                         onAction={onDashboardAction}
                     />
+                </TabsContent>
+
+                <TabsContent value="discharge">
+                    <DischargePlanner patient={{ name: 'John Doe' }} role="doctor" />
+                </TabsContent>
+
+                <TabsContent value="recovery">
+                    <PatientPostDischargeHub />
+                </TabsContent>
+
+                <TabsContent value="eol">
+                    <EndOfLifeConfirmation patient={{ id: '8821', name: 'John Doe' }} currentDoctor={user} />
                 </TabsContent>
 
                 <TabsContent value="imaging">

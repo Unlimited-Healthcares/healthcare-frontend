@@ -61,7 +61,7 @@ interface ClinicalRequestModalProps {
     onClose: () => void;
     currentDoctor?: any;
     preselectedPatient?: PatientRecord | null;
-    preselectedCategory?: 'referral' | 'diagnostic' | 'pharmacy' | 'imaging' | 'prescription' | 'radiotherapy' | 'report' | 'care_task' | 'appointment' | 'call' | 'treatment' | 'transfer' | 'connection' | 'biotech' | 'consultation' | null;
+    preselectedCategory?: 'referral' | 'diagnostic' | 'pharmacy' | 'imaging' | 'prescription' | 'radiotherapy' | 'report' | 'care_task' | 'appointment' | 'call' | 'treatment' | 'transfer' | 'connection' | 'biotech' | 'consultation' | 'death_certificate' | 'discharge_summary' | null;
 }
 
 export const ClinicalRequestModal = ({
@@ -78,7 +78,7 @@ export const ClinicalRequestModal = ({
     const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchedPatients, setSearchedPatients] = useState<User[]>([]);
-    const [category, setCategory] = useState<'referral' | 'diagnostic' | 'pharmacy' | 'imaging' | 'prescription' | 'radiotherapy' | 'report' | 'care_task' | 'appointment' | 'call' | 'treatment' | 'transfer' | 'connection' | 'biotech' | 'consultation'>('diagnostic');
+    const [category, setCategory] = useState<'referral' | 'diagnostic' | 'pharmacy' | 'imaging' | 'prescription' | 'radiotherapy' | 'report' | 'care_task' | 'appointment' | 'call' | 'treatment' | 'transfer' | 'connection' | 'biotech' | 'consultation' | 'death_certificate' | 'discharge_summary'>('diagnostic');
     const [colleagueName, setColleagueName] = useState('');
     const [consentGiven, setConsentGiven] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -124,6 +124,18 @@ export const ClinicalRequestModal = ({
         dose: '',
         cycles: '',
         technique: ''
+    });
+    const [deathCertificateDetails, setDeathCertificateDetails] = useState({
+        dateTimeOfDeath: '',
+        causeOfDeath: '',
+        placeOfDeath: '',
+        informantName: ''
+    });
+    const [dischargeSummaryDetails, setDischargeSummaryDetails] = useState({
+        admissionDate: '',
+        dischargeDate: '',
+        summaryOfCare: '',
+        followUpInstructions: ''
     });
 
     // Ambulance Transfer Paperwork
@@ -328,6 +340,8 @@ export const ClinicalRequestModal = ({
                     reportDetails,
                     signature,
                     vitals,
+                    deathCertificateDetails,
+                    dischargeSummaryDetails,
                 }
             });
 
@@ -403,6 +417,10 @@ export const ClinicalRequestModal = ({
                                     <><Stethoscope className="h-8 w-8 text-indigo-400" /> Specialist Consultation</>
                                 ) : category === 'referral' ? (
                                     <><ArrowRight className="h-8 w-8 text-blue-400" /> Clinical Referral</>
+                                ) : category === 'death_certificate' ? (
+                                    <><FileText className="h-8 w-8 text-slate-400" /> Death Certificate</>
+                                ) : category === 'discharge_summary' ? (
+                                    <><ClipboardCheck className="h-8 w-8 text-emerald-400" /> Discharge Summary</>
                                 ) : (
                                     <><ClipboardCheck className="h-8 w-8 text-emerald-400" /> Request Card</>
                                 )}
@@ -418,7 +436,11 @@ export const ClinicalRequestModal = ({
                                                 ? "Formalize a specialist review or second opinion for your patient."
                                                 : category === 'referral'
                                                     ? "Process a patient transfer to a specialty clinic or hospital."
-                                                    : "Create a formal, digitally signed medical request."}
+                                                    : category === 'death_certificate'
+                                                        ? "Issue a formal, signed certification of death for legal and medical records."
+                                                        : category === 'discharge_summary'
+                                                            ? "Document the patient's hospital course and post-discharge plan."
+                                                            : "Create a formal, digitally signed medical request."}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -501,7 +523,9 @@ export const ClinicalRequestModal = ({
                                                     category === 'biotech' ? 'Equipment / Bioengineering Form' :
                                                         category === 'consultation' ? 'Specialist Consulting Form' :
                                                             category === 'diagnostic' || category === 'imaging' ? 'Medical Investigation Form' :
-                                                                'Medical Order Form'
+                                                                category === 'death_certificate' ? 'Death Certification Form' :
+                                                                    category === 'discharge_summary' ? 'Clinical Discharge Summary' :
+                                                                        'Medical Order Form'
                                     }
                                 </h4>
                                 <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold border border-emerald-100 uppercase animate-pulse">
@@ -522,6 +546,8 @@ export const ClinicalRequestModal = ({
                                                 { id: 'referral', label: 'Referral', icon: ArrowRight },
                                                 { id: 'biotech', label: 'Biotech', icon: Activity },
                                                 { id: 'consultation', label: 'Specialist', icon: Stethoscope },
+                                                { id: 'death_certificate', label: 'Death Cert', icon: FileText },
+                                                { id: 'discharge_summary', label: 'Discharge', icon: ClipboardCheck },
                                             ].map((cat) => (
                                                 <button
                                                     key={cat.id}
@@ -587,6 +613,32 @@ export const ClinicalRequestModal = ({
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {category === 'death_certificate' && (
+                                                    <div className="space-y-4 animate-in fade-in duration-500">
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Date & Time of Death *</Label>
+                                                            <Input type="datetime-local" className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={deathCertificateDetails.dateTimeOfDeath} onChange={(e) => setDeathCertificateDetails({ ...deathCertificateDetails, dateTimeOfDeath: e.target.value })} />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Primary Cause of Death *</Label>
+                                                            <Input placeholder="e.g. Myocardial Infarction..." className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={deathCertificateDetails.causeOfDeath} onChange={(e) => setDeathCertificateDetails({ ...deathCertificateDetails, causeOfDeath: e.target.value })} />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {category === 'discharge_summary' && (
+                                                    <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-500">
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Admission Date</Label>
+                                                            <Input type="date" className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={dischargeSummaryDetails.admissionDate} onChange={(e) => setDischargeSummaryDetails({ ...dischargeSummaryDetails, admissionDate: e.target.value })} />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Discharge Date</Label>
+                                                            <Input type="date" className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={dischargeSummaryDetails.dischargeDate} onChange={(e) => setDischargeSummaryDetails({ ...dischargeSummaryDetails, dischargeDate: e.target.value })} />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="space-y-4">
@@ -607,6 +659,28 @@ export const ClinicalRequestModal = ({
                                                             </div>
                                                         </div>
                                                     </>
+                                                ) : category === 'death_certificate' ? (
+                                                    <div className="space-y-4 animate-in fade-in duration-500">
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Place of Death *</Label>
+                                                            <Input placeholder="e.g. General Hospital, Ward 4..." className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={deathCertificateDetails.placeOfDeath} onChange={(e) => setDeathCertificateDetails({ ...deathCertificateDetails, placeOfDeath: e.target.value })} />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Informant Name/Relation</Label>
+                                                            <Input placeholder="Next of Kin..." className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={deathCertificateDetails.informantName} onChange={(e) => setDeathCertificateDetails({ ...deathCertificateDetails, informantName: e.target.value })} />
+                                                        </div>
+                                                    </div>
+                                                ) : category === 'discharge_summary' ? (
+                                                    <div className="space-y-4 animate-in fade-in duration-500">
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Summary of Hospital Care *</Label>
+                                                            <Textarea placeholder="Treatment provided, progress..." className="min-h-[80px] rounded-lg bg-white border-slate-200 text-xs font-bold" value={dischargeSummaryDetails.summaryOfCare} onChange={(e) => setDischargeSummaryDetails({ ...dischargeSummaryDetails, summaryOfCare: e.target.value })} />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Follow-up Instructions</Label>
+                                                            <Input placeholder="e.g. Clinic visit in 2 weeks..." className="h-10 rounded-lg bg-white border-slate-200 text-xs font-bold" value={dischargeSummaryDetails.followUpInstructions} onChange={(e) => setDischargeSummaryDetails({ ...dischargeSummaryDetails, followUpInstructions: e.target.value })} />
+                                                        </div>
+                                                    </div>
                                                 ) : (
                                                     <>
                                                         <div>
@@ -961,6 +1035,34 @@ export const ClinicalRequestModal = ({
                                                                     </tr>
                                                                 </>
                                                             )}
+                                                            {category === 'death_certificate' && (
+                                                                <>
+                                                                    <tr>
+                                                                        <td className="px-4 py-3 font-bold text-slate-400 uppercase text-[9px]">Time of Death</td>
+                                                                        <td className="px-4 py-3 font-bold text-slate-900 uppercase">{deathCertificateDetails.dateTimeOfDeath}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td className="px-4 py-3 font-bold text-slate-400 uppercase text-[9px]">Cause of Death</td>
+                                                                        <td className="px-4 py-3 font-bold text-slate-900 uppercase">{deathCertificateDetails.causeOfDeath}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td className="px-4 py-3 font-bold text-slate-400 uppercase text-[9px]">Place of Death</td>
+                                                                        <td className="px-4 py-3 font-bold text-slate-900 uppercase">{deathCertificateDetails.placeOfDeath}</td>
+                                                                    </tr>
+                                                                </>
+                                                            )}
+                                                            {category === 'discharge_summary' && (
+                                                                <>
+                                                                    <tr>
+                                                                        <td className="px-4 py-3 font-bold text-slate-400 uppercase text-[9px]">Admission Date</td>
+                                                                        <td className="px-4 py-3 font-bold text-slate-900 uppercase">{dischargeSummaryDetails.admissionDate}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td className="px-4 py-3 font-bold text-slate-400 uppercase text-[9px]">Discharge Date</td>
+                                                                        <td className="px-4 py-3 font-bold text-slate-900 uppercase">{dischargeSummaryDetails.dischargeDate}</td>
+                                                                    </tr>
+                                                                </>
+                                                            )}
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -969,11 +1071,40 @@ export const ClinicalRequestModal = ({
                                             <div>
                                                 <h5 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                                                     <div className="h-4 w-1 bg-blue-600 rounded-full" />
-                                                    {category === 'report' ? 'Interpretative Remarks' : 'Conclusion / Recommendation'}
+                                                    {category === 'death_certificate' ? 'Death Certification Remarks' :
+                                                        category === 'discharge_summary' ? 'Post-Discharge Instructions' :
+                                                            category === 'report' ? 'Interpretative Remarks' : 'Conclusion / Recommendation'}
                                                 </h5>
                                                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 border-dashed">
                                                     <div className="text-sm font-bold text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                                        {category === 'report' ? (
+                                                        {category === 'death_certificate' ? (
+                                                            <div className="space-y-4">
+                                                                <p className="text-slate-900">{clinicalNotes}</p>
+                                                                {deathCertificateDetails.informantName && (
+                                                                    <div className="pt-2 border-t border-slate-200">
+                                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Informant Details</p>
+                                                                        <p className="text-slate-900 font-black">{deathCertificateDetails.informantName}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : category === 'discharge_summary' ? (
+                                                            <div className="space-y-4">
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Summary of Care</p>
+                                                                    <p className="text-slate-900">{dischargeSummaryDetails.summaryOfCare}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Follow-up Plan</p>
+                                                                    <p className="text-slate-900">{dischargeSummaryDetails.followUpInstructions}</p>
+                                                                </div>
+                                                                {clinicalNotes && (
+                                                                    <div className="pt-2 border-t border-slate-200">
+                                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Additional Notes</p>
+                                                                        <p className="text-slate-500 italic">{clinicalNotes}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : category === 'report' ? (
                                                             <div className="space-y-4">
                                                                 <div>
                                                                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 underline decoration-emerald-100">Findings / Results</p>

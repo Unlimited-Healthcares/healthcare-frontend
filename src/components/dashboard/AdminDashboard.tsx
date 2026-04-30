@@ -80,6 +80,9 @@ import { useEffect, useCallback } from "react";
 import { adminService, AdminUser } from "@/services/adminService";
 import { toast } from "sonner";
 import { ProvisionUserModal } from "../admin/ProvisionUserModal";
+import { AdminUserManagement } from "./AdminUserManagement";
+import { HospitalPerformanceHub } from "./HospitalPerformanceHub";
+import { AdminComplianceAudit } from "./AdminComplianceAudit";
 
 // Dashboard state interfaces
 interface DashboardSummary {
@@ -244,13 +247,21 @@ export const AdminDashboard = () => {
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="mb-4 sm:mb-6 flex flex-wrap gap-2">
-          <TabsTrigger value="overview" className="flex-1 sm:flex-none">
+           <TabsTrigger value="overview" className="flex-1 sm:flex-none">
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
           </TabsTrigger>
+          <TabsTrigger value="performance" className="flex-1 sm:flex-none">
+            <Activity className="h-4 w-4 mr-2" />
+            Performance
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex-1 sm:flex-none">
             <Users className="h-4 w-4 mr-2" />
-            Users
+            Governance
+          </TabsTrigger>
+          <TabsTrigger value="compliance" className="flex-1 sm:flex-none">
+            <ShieldCheck className="h-4 w-4 mr-2" />
+            Compliance
           </TabsTrigger>
           <TabsTrigger value="centers" className="flex-1 sm:flex-none">
             <Building2 className="h-4 w-4 mr-2" />
@@ -263,10 +274,6 @@ export const AdminDashboard = () => {
           <TabsTrigger value="settings" className="flex-1 sm:flex-none">
             <Settings className="h-4 w-4 mr-2" />
             Settings
-          </TabsTrigger>
-          <TabsTrigger value="audit" className="flex-1 sm:flex-none">
-            <ShieldCheck className="h-4 w-4 mr-2" />
-            Audit Logs
           </TabsTrigger>
         </TabsList>
 
@@ -596,187 +603,16 @@ export const AdminDashboard = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="performance">
+            <HospitalPerformanceHub />
+        </TabsContent>
+
         <TabsContent value="users" className="space-y-4 sm:space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg sm:text-xl">User Management</CardTitle>
-                  <CardDescription className="text-sm">
-                    View and manage all users of the platform
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate('/admin/users')}
-                    className="flex-1 sm:flex-none"
-                  >
-                    Open Full Directory
-                  </Button>
-                  <Button onClick={() => setIsAddUserModalOpen(true)} className="flex-1 sm:flex-none">Add New User</Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-4">
-                  <div className="relative w-full">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search users..."
-                      className="pl-8 w-full"
-                      value={searchUsers}
-                      onChange={(e) => setSearchUsers(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <Select value={roleFilter} onValueChange={setRoleFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Roles</SelectItem>
-                        <SelectItem value="patient">Patients</SelectItem>
-                        <SelectItem value="doctor">Doctors</SelectItem>
-                        <SelectItem value="facility">Facilities</SelectItem>
-                        <SelectItem value="admin">Administrators</SelectItem>
-                      </SelectContent>
-                    </Select>
+            <AdminUserManagement />
+        </TabsContent>
 
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={verificationFilter} onValueChange={setVerificationFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by verification" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="verified">Verified</SelectItem>
-                        <SelectItem value="unverified">Unverified</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">User</TableHead>
-                        <TableHead className="min-w-[100px]">ID</TableHead>
-                        <TableHead className="min-w-[100px]">Role</TableHead>
-                        <TableHead className="min-w-[100px]">Status</TableHead>
-                        <TableHead className="min-w-[100px]">Joined</TableHead>
-                        <TableHead className="min-w-[80px]">Verified</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.length > 0 ? (
-                        filteredUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={`/images/avatars/${user.roles[0] || 'patient'}.jpg`} />
-                                  <AvatarFallback>
-                                    {user.name.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium">{user.name}</p>
-                                  <p className="text-xs text-muted-foreground">{user.email}</p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-xs">{user.id.substring(0, 8)}...</TableCell>
-                            <TableCell>{user.roles.map(role => getRoleBadge(role, user.specialization))}</TableCell>
-                            <TableCell>{getStatusBadge(user.isActive ? 'active' : 'inactive')}</TableCell>
-                            <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                              {user.kycStatus === 'APPROVED' ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                              ) : (
-                                <XCircle className="h-5 w-5 text-red-500" />
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                  <DropdownMenuItem>Edit User</DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  {user.kycStatus === 'APPROVED' ? (
-                                    <DropdownMenuItem>
-                                      <Ban className="h-4 w-4 mr-2" />
-                                      Revoke Verification
-                                    </DropdownMenuItem>
-                                  ) : (
-                                    <DropdownMenuItem>
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Verify User
-                                    </DropdownMenuItem>
-                                  )}
-                                  {user.isActive ? (
-                                    <DropdownMenuItem>
-                                      <Ban className="h-4 w-4 mr-2" />
-                                      Deactivate
-                                    </DropdownMenuItem>
-                                  ) : (
-                                    <DropdownMenuItem>
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Activate
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={7} className="h-24 text-center">
-                            No users found matching your filters.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                Showing {filteredUsers.length} users
-              </div>
-              <div className="flex gap-2 order-1 sm:order-2">
-                <Button variant="outline" size="sm" disabled>Previous</Button>
-                <Button variant="outline" size="sm" disabled>Next</Button>
-              </div>
-            </CardFooter>
-          </Card>
+        <TabsContent value="compliance">
+            <AdminComplianceAudit />
         </TabsContent>
 
         <TabsContent value="centers" className="space-y-4 sm:space-y-6">
@@ -1135,26 +971,6 @@ export const AdminDashboard = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="audit" className="space-y-4">
-          <Card className="border-none shadow-premium rounded-3xl bg-white overflow-hidden">
-            <div className="p-12 text-center space-y-6">
-              <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mx-auto">
-                <ShieldCheck className="h-10 w-10 text-emerald-400" />
-              </div>
-              <div className="max-w-md mx-auto space-y-2">
-                <h3 className="text-2xl font-bold text-slate-900">Security Audit Logs</h3>
-                <p className="text-slate-500">Review comprehensive system activity, administrative actions, and security events.</p>
-              </div>
-              <Button
-                onClick={() => navigate('/admin/audit')}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 rounded-2xl font-bold text-lg group shadow-xl transition-all"
-              >
-                View Audit Explorer
-                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-          </Card>
-        </TabsContent>
       </Tabs>
       <ProvisionUserModal
         isOpen={isAddUserModalOpen}

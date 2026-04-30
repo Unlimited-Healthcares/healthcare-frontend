@@ -77,7 +77,8 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       'axios',
-      'lucide-react'
+      'lucide-react',
+      'agora-rtc-sdk-ng'
     ]
   }
 })

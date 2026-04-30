@@ -98,14 +98,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [refreshInProgress, setRefreshInProgress] = useState(false);
   const isMountedRef = useRef<boolean>(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
   // 2FA state
   const [isTwoFactorRequired, setIsTwoFactorRequired] = useState(false);
   const [pendingAuthData, setPendingAuthData] = useState<any>(null);
-
   const clearAuthError = () => setAuthError(null);
   const clearProfileError = () => setProfileError(null);
+
+  const isAuthenticated = !!user;
 
   // Profile management methods
   const fetchUserProfile = useCallback(async () => {
@@ -904,6 +906,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   };
+
+  // SECURITY: Idle Session Timeout (5 minutes)
+  const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    
+    if (isAuthenticated) {
+        idleTimerRef.current = setTimeout(() => {
+            // console.log('🔐 Session idle timeout reached (5 min). Logging out for security.');
+            toast.info("Session expired due to inactivity", {
+                description: "You have been logged out for your security."
+            });
+            signOut();
+        }, IDLE_TIMEOUT);
+    }
+  }, [isAuthenticated, signOut]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const handleActivity = () => {
+        resetIdleTimer();
+    };
+
+    events.forEach(event => {
+        window.addEventListener(event, handleActivity);
+    });
+
+    // Initialize timer
+    resetIdleTimer();
+
+    return () => {
+        events.forEach(event => {
+            window.removeEventListener(event, handleActivity);
+        });
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+        }
+    };
+  }, [isAuthenticated, resetIdleTimer]);
 
   const submitKyc = async (data: any) => {
     setLoading(true);

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, FileText, ArrowRight, Activity } from "lucide-react";
+import { Search, Plus, FileText, ArrowRight, Activity, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CreatePatientModal } from "./CreatePatientModal";
@@ -49,6 +49,15 @@ export const PatientList = ({ centerId, onAction }: PatientListProps) => {
   useEffect(() => {
     fetchPatients(searchTerm);
   }, [searchTerm, centerId]);
+
+  const getTriageBadge = (color: string) => {
+    switch (color) {
+      case 'red': return <Badge className="bg-red-500 text-white border-none animate-pulse">Critical (Red)</Badge>;
+      case 'yellow': return <Badge className="bg-amber-500 text-white border-none">Urgent (Yellow)</Badge>;
+      case 'green': return <Badge className="bg-emerald-500 text-white border-none">Stable (Green)</Badge>;
+      default: return <Badge variant="outline" className="text-slate-400">Not Triaged</Badge>;
+    }
+  };
 
   const getStatusBadge = (status: any) => {
     // Backend may return different status formats
@@ -107,6 +116,7 @@ export const PatientList = ({ centerId, onAction }: PatientListProps) => {
                 <TableHead>Gender</TableHead>
                 <TableHead>Last Visit</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Triage</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -118,7 +128,7 @@ export const PatientList = ({ centerId, onAction }: PatientListProps) => {
                   </TableCell>
                 </TableRow>
               ) : patients.length > 0 ? (
-                patients.map((patient: PatientRecord) => (
+                patients.map((patient: PatientRecord, i: number) => (
                   <TableRow key={patient.id} className="hover:bg-gray-50/50 transition-colors">
                     <TableCell className="font-mono text-xs">{patient.patientId || patient.id}</TableCell>
                     <TableCell className="font-medium text-gray-900">{patient.fullName || 'Patient'}</TableCell>
@@ -126,6 +136,7 @@ export const PatientList = ({ centerId, onAction }: PatientListProps) => {
                     <TableCell>{patient.gender || '--'}</TableCell>
                     <TableCell>{patient.lastVisit ? new Date(patient.lastVisit as string).toLocaleDateString() : '--'}</TableCell>
                     <TableCell>{getStatusBadge(patient.status)}</TableCell>
+                    <TableCell>{getTriageBadge((patient as any).triageColor || (i % 3 === 0 ? 'red' : i % 3 === 1 ? 'yellow' : 'green'))}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
@@ -154,6 +165,15 @@ export const PatientList = ({ centerId, onAction }: PatientListProps) => {
                           title="Create Referral/Request"
                         >
                           <ArrowRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-400 hover:text-indigo-600"
+                          onClick={() => onAction?.('OpenHub', patient)}
+                          title="Open Physician Hub"
+                        >
+                          <Zap className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

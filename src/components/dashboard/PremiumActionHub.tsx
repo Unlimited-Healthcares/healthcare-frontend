@@ -89,6 +89,14 @@ export const PremiumActionHub = ({ onAction }: { onAction: (action: string) => v
             color: 'from-violet-500 to-purple-700',
             category: 'Pharmacy'
         },
+        {
+            id: 'symptoms',
+            label: 'Check Symptoms',
+            sublabel: 'AI-Powered Smart Triage Bot',
+            icon: Sparkles,
+            color: 'from-indigo-600 to-violet-800',
+            category: 'Check Symptoms'
+        },
     ];
 
     return (

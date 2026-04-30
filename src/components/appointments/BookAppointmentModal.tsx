@@ -16,7 +16,11 @@ import {
   Shield,
   Zap,
   Star,
-  Search
+  Search,
+  Printer,
+  CheckCircle2,
+  Wallet,
+  CreditCard as CreditCardIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,6 +131,16 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState('weekly');
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'paystack' | 'flutterwave'>('wallet');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+  const baseAmount = selectedType === 'emergency' ? 150 : 50;
+  const platformCharge = baseAmount * 0.15;
+  const totalAmount = baseAmount + platformCharge;
+  const currency = 'USD';
+  const userId = user?.id;
 
   useEffect(() => {
     if (isOpen) {
@@ -162,6 +176,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
     if (currentStep === 1) return !!selectedType && !!selectedFormat;
     if (currentStep === 2) return !!selectedProvider && !!selectedDate && !!selectedTime;
     if (currentStep === 3) return !!reason;
+    if (currentStep === 4) return paymentStatus === 'completed';
     return true;
   };
 
@@ -175,6 +190,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
       return 'Commit Protocol';
     }
     if (currentStep === 3) return 'Authorize Session';
+    if (currentStep === 4) return 'Verify Payment';
     return 'Done';
   };
 
@@ -206,18 +222,55 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
         providerId: selectedDoctorProvider?.providerId || selectedProvider || ''
       };
 
+      if (!isHealthcareProvider && paymentStatus !== 'completed') {
+        setIsProcessingPayment(true);
+        try {
+          const paymentData = {
+            amount: baseAmount,
+            currency: currency,
+            patientId: patientId || userId || null,
+            centerId: centerId || null,
+            description: `Clinical Appointment: ${selectedType}`,
+            paymentMethod: paymentMethod,
+            metadata: {
+              appointmentType: selectedType,
+              preferredDate: selectedDate,
+              preferredTime: selectedTime,
+              reason: reason,
+              providerId: selectedProvider
+            }
+          };
+
+          const result = await integrationsService.processPayment(paymentData);
+          if (result.redirectUrl) {
+            window.location.href = result.redirectUrl;
+            return;
+          } else if (result.status === 'succeeded') {
+            setPaymentStatus('completed');
+          } else {
+            throw new Error('Financial node rejected transaction');
+          }
+        } catch (err) {
+          setError('Payment initialization failed. Protocol aborted.');
+          setIsSuccess(false);
+          setCurrentStep(5);
+          return;
+        } finally {
+          setIsProcessingPayment(false);
+        }
+      }
+
       const result = await appointmentService.createAppointment(appointmentData as any);
 
-      // Payment logic placeholder
-      if (selectedType === 'consultation' && false) { // Skip payment logic for now unless explicitly needed
-        // Payment redirect logic here if required
+      if (selectedType === 'consultation' && paymentStatus !== 'completed') {
+        throw new Error('Payment verification required for clinical consultation.');
       }
 
       toast.success('Clinical session authorized and buffered.');
       setIsSuccess(true);
-      setCurrentStep(4);
+      setCurrentStep(5);
       onSuccess();
-      setTimeout(handleClose, 3000);
+      setTimeout(handleClose, 5000);
     } catch (err) {
       console.error('Session authorization failure:', err);
       setError(err instanceof Error ? err.message : 'System synchronization conflict');
@@ -478,6 +531,65 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   );
 
   const renderStep4 = () => (
+    <motion.div variants={stepVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+      <div className="text-center space-y-2">
+        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Financial Protocol</h3>
+        <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[9px]">Select a secure reconciliation vector</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { id: 'wallet', name: 'Wallet', icon: Wallet, desc: `Bal: $${walletBalance?.toLocaleString() || '0'}` },
+          { id: 'paystack', name: 'Paystack', icon: CreditCardIcon, desc: 'Secure NGN' },
+          { id: 'flutterwave', name: 'FWave', icon: CreditCardIcon, desc: 'Global Link' }
+        ].map(m => (
+          <button
+            key={m.id}
+            onClick={() => setPaymentMethod(m.id as any)}
+            className={`p-6 rounded-[32px] border-2 flex flex-col items-center gap-3 transition-all ${paymentMethod === m.id
+              ? 'border-primary bg-primary/5 shadow-lg'
+              : 'border-slate-50 hover:border-slate-100 bg-white'
+              }`}
+          >
+            <div className={`p-3 rounded-2xl ${paymentMethod === m.id ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400'}`}>
+              <m.icon className="h-5 w-5" />
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest">{m.name}</p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{m.desc}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-slate-900 rounded-[40px] p-8 text-white space-y-4 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <CreditCardIcon className="h-24 w-24" />
+        </div>
+        <div className="flex justify-between items-center relative z-10">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Consultation Fee</span>
+          <span className="font-bold text-lg">${baseAmount.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between items-center relative z-10">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Platform Service (15%)</span>
+          <span className="font-bold text-lg text-emerald-400">+ ${platformCharge.toFixed(2)}</span>
+        </div>
+        <div className="pt-4 border-t border-slate-800 flex justify-between items-center relative z-10">
+          <span className="text-xs font-black uppercase tracking-[0.4em]">Total Due</span>
+          <span className="text-3xl font-black text-white">${totalAmount.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {paymentStatus === 'completed' && (
+        <div className="flex items-center justify-center gap-3 text-emerald-500 font-black uppercase text-[10px] tracking-widest bg-emerald-50 py-4 rounded-2xl border border-emerald-100">
+          <CheckCircle2 className="h-4 w-4" />
+          Pre-Verified Transaction Detected
+        </div>
+      )}
+    </motion.div>
+  );
+
+  const renderStep5 = () => (
     <motion.div variants={stepVariants} initial="initial" animate="animate" exit="exit" className="py-20 text-center space-y-12">
       {isSuccess ? (
         <>
@@ -507,19 +619,6 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Temporal Signature</p>
                 <p className="font-black text-slate-900">{selectedDate} @ {selectedTime}</p>
               </div>
-            </div>
-            <div
-              onClick={() => setIsInvoiceModalOpen(true)}
-              className="bg-emerald-50 p-6 rounded-[32px] border border-emerald-100 flex items-center justify-between gap-4 text-left cursor-pointer hover:bg-emerald-100/50 transition-all active:scale-95"
-            >
-              <div className="flex items-center gap-4">
-                <Shield className="h-6 w-6 text-emerald-600" />
-                <div>
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Billing Automated</p>
-                  <p className="font-black text-slate-900 leading-none">Generate Digital Invoice</p>
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 text-emerald-400" />
             </div>
           </div>
         </>
@@ -561,14 +660,14 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
           </div>
 
           {/* STEP INDICATOR */}
-          {currentStep < 4 && (
+          {currentStep < 5 && (
             <div className="px-6 md:px-10 mt-6 md:mt-10">
               <div className="flex items-center gap-2 md:gap-4">
-                {[1, 2, 3].map(s => (
+                {[1, 2, 3, 4].map(s => (
                   <div key={s} className="flex-1">
                     <div className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${s <= currentStep ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-slate-100'}`} />
                     <p className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest mt-2 transition-colors ${s === currentStep ? 'text-primary' : 'text-slate-300'}`}>
-                      {s === 1 ? 'Objective' : s === 2 ? 'Personnel' : 'Rationale'}
+                      {s === 1 ? 'Objective' : s === 2 ? 'Personnel' : s === 3 ? 'Rationale' : 'Payment'}
                     </p>
                   </div>
                 ))}
@@ -583,11 +682,12 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               {currentStep === 2 && renderStep2()}
               {currentStep === 3 && renderStep3()}
               {currentStep === 4 && renderStep4()}
+              {currentStep === 5 && renderStep5()}
             </AnimatePresence>
           </div>
 
           {/* FOOTER */}
-          {currentStep < 4 && (
+          {currentStep < 5 && (
             <div className="p-6 md:p-10 pt-0 pb-10 bg-white">
               <div className="flex flex-col sm:flex-row gap-3">
                 {currentStep > 1 && (
@@ -600,7 +700,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                   </Button>
                 )}
                 <Button
-                  onClick={currentStep === 3 ? handleSubmit : () => setCurrentStep(prev => prev + 1)}
+                  onClick={currentStep === 4 ? handleSubmit : () => setCurrentStep(prev => prev + 1)}
                   disabled={loading || !canMoveToNextStep()}
                   className="flex-1 h-14 md:h-16 rounded-2xl md:rounded-[24px] bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] md:text-xs tracking-widest shadow-premium disabled:opacity-50 order-1 sm:order-2"
                 >
