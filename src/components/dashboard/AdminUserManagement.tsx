@@ -22,6 +22,10 @@ import {
     Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { adminService, AdminUser } from '@/services/adminService';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface UserRole {
     id: string;
@@ -32,17 +36,40 @@ interface UserRole {
 }
 
 export function AdminUserManagement() {
-    const [users, setUsers] = useState<UserRole[]>([
-        { id: '1', name: 'Dr. Sarah Chen', role: 'Doctor (Cardiology)', status: 'ACTIVE', lastActive: '2 mins ago' },
-        { id: '2', name: 'Elena Rodriguez', role: 'Physiotherapist', status: 'ACTIVE', lastActive: '10 mins ago' },
-        { id: '3', name: 'James Wilson', role: 'Pharmacist', status: 'INACTIVE', lastActive: '2 days ago' },
-        { id: '4', name: 'Admin Michael', role: 'Hospital Admin', status: 'ACTIVE', lastActive: 'Now' }
-    ]);
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
 
-    const handleDeactivate = (id: string) => {
-        toast.warning("User Deactivated", {
-            description: "Access credentials revoked. Audit log entry created."
-        });
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const response = await adminService.getUsers({ limit: 100 });
+            setUsers(Array.isArray(response) ? response : (response.data || []));
+        } catch (error) {
+            console.error('Failed to fetch users:', error);
+            toast.error("Failed to load personnel registry");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const handleDeactivate = async (id: string) => {
+        try {
+            setIsActionLoading(id);
+            await adminService.deleteUser(id);
+            setUsers(prev => prev.filter(u => u.id !== id));
+            toast.warning("User Deactivated", {
+                description: "Access credentials revoked. Audit log entry created."
+            });
+        } catch (error) {
+            toast.error("Failed to deactivate user");
+        } finally {
+            setIsActionLoading(null);
+        }
     };
 
     return (
@@ -88,7 +115,20 @@ export function AdminUserManagement() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {users.map((u) => (
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-8 py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Accessing Secure Registry...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : users.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-8 py-20 text-center text-slate-400 font-bold uppercase text-[10px]">No personnel records found</td>
+                                        </tr>
+                                    ) : users.map((u) => (
                                         <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-3">
@@ -97,25 +137,34 @@ export function AdminUserManagement() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{u.name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">UID: {u.id}0024</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">UID: {u.id.slice(0, 8)}</p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[9px] uppercase tracking-widest px-3">
-                                                    {u.role}
-                                                </Badge>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {u.roles.map(r => (
+                                                        <Badge key={r} className="bg-indigo-50 text-indigo-600 border-none font-black text-[9px] uppercase tracking-widest px-3">
+                                                            {r}
+                                                        </Badge>
+                                                    ))}
+                                                    {u.specialization && (
+                                                        <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[9px] uppercase tracking-widest px-3">
+                                                            {u.specialization}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${u.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                        {u.status}
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${u.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${u.isActive ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                        {u.isActive ? 'ACTIVE' : 'INACTIVE'}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{u.lastActive}</p>
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'NEVER'}</p>
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="flex justify-end gap-2">
@@ -125,9 +174,10 @@ export function AdminUserManagement() {
                                                     <Button 
                                                         variant="ghost" 
                                                         onClick={() => handleDeactivate(u.id)}
+                                                        disabled={isActionLoading === u.id}
                                                         className="h-10 w-10 p-0 rounded-xl hover:bg-rose-50 hover:text-rose-600"
                                                     >
-                                                        <UserMinus className="h-4 w-4" />
+                                                        {isActionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
                                                     </Button>
                                                     <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100">
                                                         <MoreVertical className="h-4 w-4 text-slate-400" />

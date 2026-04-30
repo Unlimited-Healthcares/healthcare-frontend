@@ -27,6 +27,10 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { VideoConferenceRoom } from '@/components/videoConferences/VideoConferenceRoom';
 import { DicomViewer } from './DicomViewer';
+import { imagingService } from '@/services/imagingService';
+import { medicalReportsService } from '@/services/medicalReportsService';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface ImagingMissionDashboardProps {
     order: any;
@@ -35,7 +39,9 @@ interface ImagingMissionDashboardProps {
 }
 
 export function ImagingMissionDashboard({ order, onBack, onComplete }: ImagingMissionDashboardProps) {
+    const { profile } = useAuth();
     const [acquisitionStatus, setAcquisitionStatus] = useState<'pending' | 'started' | 'processing' | 'completed'>('pending');
+    const [isSaving, setIsSaving] = useState(false);
     const [examDetails, setExamDetails] = useState({
         technique: '',
         contrast: 'None',
@@ -49,9 +55,46 @@ export function ImagingMissionDashboard({ order, onBack, onComplete }: ImagingMi
         toast.success(`Acquisition status: ${status.toUpperCase()}`);
     };
 
-    const handleFinalize = () => {
-        toast.success("Imaging mission finalized. Report sent to referring doctor and cardiologist.");
-        onComplete();
+    const handleFinalize = async () => {
+        try {
+            setIsSaving(true);
+            
+            // 1. Create Imaging Study Record
+            const study = await imagingService.createStudy({
+                patientId: order.patientId || order.metadata?.patientId,
+                description: order.exam,
+                modality: order.category?.toUpperCase() || 'RAD',
+                centerId: (profile as any)?.centerId,
+                isUrgent: order.priority === 'Stroke' || order.priority === 'Trauma'
+            });
+
+            // 2. Create Formal Medical Report with findings
+            await medicalReportsService.createMedicalReport({
+                patientId: order.patientId || order.metadata?.patientId,
+                title: `Imaging Report: ${order.exam}`,
+                diagnosis: examDetails.findings || "Normal study for age/indication",
+                notes: `Technique: ${examDetails.technique}. Contrast: ${examDetails.contrast}.`,
+                recordType: 'imaging_report',
+                category: 'imaging',
+                centerId: (profile as any)?.centerId,
+                status: 'FINALIZED',
+                metadata: {
+                    studyId: study.id,
+                    acquisitionStatus: acquisitionStatus,
+                    technicianNotes: examDetails.findings,
+                    examProtocol: examDetails.technique,
+                    originalOrderId: order.id
+                }
+            } as any);
+
+            toast.success("Imaging mission finalized. Report archived and dispatched to MDT.");
+            onComplete();
+        } catch (error) {
+            console.error("Failed to finalize imaging mission:", error);
+            toast.error("Failed to commit clinical data to backend");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -294,9 +337,11 @@ export function ImagingMissionDashboard({ order, onBack, onComplete }: ImagingMi
                         {acquisitionStatus === 'completed' ? (
                             <Button 
                                 onClick={handleFinalize}
+                                disabled={isSaving}
                                 className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-emerald-200 gap-3"
                             >
-                                <CheckCircle2 className="h-5 w-5" /> Finalize & Dispatch Report
+                                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                                {isSaving ? 'Archiving Study...' : 'Finalize & Dispatch Report'}
                             </Button>
                         ) : (
                             <Button 

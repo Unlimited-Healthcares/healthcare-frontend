@@ -43,7 +43,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
       {/* Header - Hidden on mobile landing page */}
       <div className="hidden md:block">

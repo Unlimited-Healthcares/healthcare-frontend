@@ -34,5 +34,9 @@ export const rehabService = {
 
   logProgress: async (id: string, log: { exerciseName: string; completed: boolean; notes?: string }) => {
     return apiClient.post<RehabPlan>(`/clinical/rehab/${id}/progress`, log);
+  },
+  
+  saveAssessment: async (data: any) => {
+    return apiClient.post('/clinical/rehab/assessment', data);
   }
 };

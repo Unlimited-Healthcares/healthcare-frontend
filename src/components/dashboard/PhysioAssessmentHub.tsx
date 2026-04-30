@@ -19,9 +19,11 @@ import {
     ClipboardList,
     Brain,
     PersonStanding,
-    ChevronRight
+    ChevronRight,
+    Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { rehabService } from '@/services/rehabService';
 
 interface PhysioAssessment {
     rom: number; // Range of Motion 0-180
@@ -43,6 +45,7 @@ export function PhysioAssessmentHub({ patient }: { patient: any }) {
     });
 
     const [newGoal, setNewGoal] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleAddGoal = () => {
         if (!newGoal) return;
@@ -50,10 +53,22 @@ export function PhysioAssessmentHub({ patient }: { patient: any }) {
         setNewGoal('');
     };
 
-    const handleSave = () => {
-        toast.success("Assessment Finalized", {
-            description: "Range of motion and strength metrics saved to patient's clinical timeline."
-        });
+    const handleSave = async () => {
+        try {
+            setIsSaving(true);
+            await rehabService.saveAssessment({
+                patientId: patient.id,
+                ...assessment
+            });
+            toast.success("Assessment Finalized", {
+                description: "Range of motion and strength metrics saved to patient's clinical timeline."
+            });
+        } catch (error) {
+            console.error("Failed to save assessment:", error);
+            toast.error("Failed to commit assessment");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -208,9 +223,11 @@ export function PhysioAssessmentHub({ patient }: { patient: any }) {
                 <Button variant="outline" className="h-14 rounded-2xl px-8 border-2 font-black uppercase text-xs tracking-widest">Reset Assessment</Button>
                 <Button 
                     onClick={handleSave}
+                    disabled={isSaving}
                     className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl px-12 font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-100 gap-3"
                 >
-                    <Save className="h-5 w-5" /> Commit Assessment Results
+                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                    {isSaving ? 'Committing...' : 'Commit Assessment Results'}
                 </Button>
             </div>
         </div>

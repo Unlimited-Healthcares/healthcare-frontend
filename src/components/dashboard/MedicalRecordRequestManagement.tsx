@@ -41,58 +41,7 @@ interface RequestData {
   outgoing: MedicalRecordRequest[];
 }
 
-// Mock data - in real implementation, this would come from API
-const createMockRequests = (centerId: string) => ({
-  incoming: [
-    {
-      id: '1',
-      patientId: 'patient-1',
-      patientName: 'John Doe',
-      fromCenterId: 'center-2',
-      fromCenterName: 'City Medical Center',
-      toCenterId: centerId,
-      toCenterName: 'Current Center',
-      purpose: 'Continuing care for chronic condition',
-      requestedAccessLevel: 'read',
-      requestedDurationDays: 30,
-      specificRecords: { all: true },
-      status: 'pending' as const,
-      requestDate: '2024-01-20T09:00:00Z'
-    },
-    {
-      id: '2',
-      patientId: 'patient-2',
-      patientName: 'Jane Smith',
-      fromCenterId: 'center-3',
-      fromCenterName: 'Specialist Clinic',
-      toCenterId: centerId,
-      toCenterName: 'Current Center',
-      purpose: 'Second opinion consultation',
-      requestedAccessLevel: 'read',
-      requestedDurationDays: 14,
-      specificRecords: { all: true },
-      status: 'pending' as const,
-      requestDate: '2024-01-19T14:30:00Z'
-    }
-  ],
-  outgoing: [
-    {
-      id: '3',
-      patientId: 'patient-3',
-      patientName: 'Bob Johnson',
-      fromCenterId: centerId,
-      fromCenterName: 'Current Center',
-      toCenterId: 'center-4',
-      toCenterName: 'Emergency Center',
-      purpose: 'Emergency treatment coordination',
-      requestedAccessLevel: 'read',
-      requestedDurationDays: 7,
-      specificRecords: { all: true },
-      status: 'approved' as const,
-      requestDate: '2024-01-18T11:15:00Z'
-    }
-  ]
-});
+import medicalRecordService from '@/services/medicalRecordService';
 
 export function MedicalRecordRequestManagement({ centerId }: MedicalRecordRequestManagementProps) {
   const [activeTab, setActiveTab] = useState('incoming');
@@ -101,12 +50,42 @@ export function MedicalRecordRequestManagement({ centerId }: MedicalRecordReques
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    setLoading(true);
-    setTimeout(() => {
-      setRequests(createMockRequests(centerId));
-      setLoading(false);
-    }, 1000);
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        const [incoming, outgoing] = await Promise.all([
+          medicalRecordService.listMedicalRecordRequests({ center_id: centerId, direction: 'incoming' }),
+          medicalRecordService.listMedicalRecordRequests({ center_id: centerId, direction: 'outgoing' })
+        ]);
+        
+        const mapRequest = (r: any): MedicalRecordRequest => ({
+          id: r.id,
+          patientId: r.patient_id,
+          patientName: r.patient_name || 'Unknown Patient',
+          fromCenterId: r.from_center_id,
+          fromCenterName: r.from_center_name || 'N/A',
+          toCenterId: r.to_center_id,
+          toCenterName: r.to_center_name || 'N/A',
+          purpose: r.purpose || 'Not specified',
+          requestedAccessLevel: r.requested_access_level || 'read',
+          requestedDurationDays: r.requested_duration_days || 0,
+          specificRecords: r.specific_records || {},
+          status: r.status,
+          requestDate: r.created_at || r.requestDate
+        });
+
+        setRequests({
+          incoming: (incoming as any[]).map(mapRequest),
+          outgoing: (outgoing as any[]).map(mapRequest)
+        });
+      } catch (error) {
+        console.error('Failed to fetch medical record requests:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
   }, [centerId]);
 
   const handleApproveRequest = async (requestId: string) => {

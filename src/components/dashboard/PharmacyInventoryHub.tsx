@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,8 @@ import {
     Calendar,
     ChevronRight,
     ArrowUpRight,
-    ShieldAlert
+    ShieldAlert,
+    Loader2
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -28,22 +29,57 @@ import {
     Cell
 } from 'recharts';
 import { cn } from '@/lib/utils';
-
-const stockData = [
-    { name: 'Amoxicillin', stock: 450, min: 100, status: 'ok' },
-    { name: 'Insulin', stock: 12, min: 50, status: 'low' },
-    { name: 'Warfarin', stock: 240, min: 50, status: 'ok' },
-    { name: 'Paracetamol', stock: 1200, min: 200, status: 'ok' },
-    { name: 'Ventolin', stock: 85, min: 100, status: 'low' }
-];
+import { pharmacyService, InventoryItem } from '@/services/pharmacyService';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 export function PharmacyInventoryHub() {
+    const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const expiryAlerts = [
-        { drug: 'Metformin 850mg', batch: 'BT-904', expiry: '15 Days', color: 'red' },
-        { drug: 'Lisinopril 10mg', batch: 'BT-112', expiry: '34 Days', color: 'amber' }
-    ];
+    const centerId = user?.centerId;
+
+    const fetchInventory = async () => {
+        try {
+            setLoading(true);
+            const data = await pharmacyService.getInventory(centerId);
+            setInventory(data);
+        } catch (error) {
+            console.error("Failed to fetch inventory:", error);
+            toast.error("Failed to sync inventory data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (centerId) {
+            fetchInventory();
+        }
+    }, [centerId]);
+
+    const filteredInventory = inventory.filter(item => 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const chartData = filteredInventory.slice(0, 10).map(item => ({
+        name: item.name,
+        stock: item.stockLevel,
+        status: item.status
+    }));
+
+    const lowStockCount = inventory.filter(i => i.status === 'low' || i.status === 'out_of_stock').length;
+
+    const expiryAlerts = inventory
+        .filter(i => i.expiryDate && new Date(i.expiryDate).getTime() < new Date().getTime() + (30 * 24 * 60 * 60 * 1000))
+        .map(i => ({
+            drug: i.name,
+            batch: i.batchNumber || 'N/A',
+            expiry: `${Math.ceil((new Date(i.expiryDate!).getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000))} Days`,
+            color: new Date(i.expiryDate!).getTime() < new Date().getTime() + (7 * 24 * 60 * 60 * 1000) ? 'red' : 'amber'
+        }));
 
     return (
         <div className="space-y-6">
@@ -62,10 +98,16 @@ export function PharmacyInventoryHub() {
                                 <Plus className="h-4 w-4" /> Add Batch
                             </Button>
                         </CardHeader>
-                        <CardContent className="p-8">
+                        <CardContent className="p-8 relative min-h-[400px]">
+                            {loading ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 z-10">
+                                    <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mb-4" />
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Synchronizing Vault...</p>
+                                </div>
+                            ) : null}
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stockData}>
+                                    <BarChart data={chartData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
@@ -74,7 +116,7 @@ export function PharmacyInventoryHub() {
                                             cursor={{ fill: '#f8fafc' }}
                                         />
                                         <Bar dataKey="stock" radius={[8, 8, 0, 0]}>
-                                            {stockData.map((entry, index) => (
+                                            {chartData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.status === 'low' ? '#ef4444' : '#6366f1'} />
                                             ))}
                                         </Bar>
@@ -85,7 +127,7 @@ export function PharmacyInventoryHub() {
                             <div className="grid grid-cols-3 gap-4 mt-8">
                                 <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
                                     <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">Low Stock</p>
-                                    <p className="text-2xl font-black text-red-700">02</p>
+                                    <p className="text-2xl font-black text-red-700">{lowStockCount.toString().padStart(2, '0')}</p>
                                     <p className="text-[9px] font-bold text-red-400 mt-1 uppercase">Items below threshold</p>
                                 </div>
                                 <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
@@ -94,9 +136,9 @@ export function PharmacyInventoryHub() {
                                     <p className="text-[9px] font-bold text-indigo-400 mt-1 uppercase">Scheduled deliveries</p>
                                 </div>
                                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Value</p>
-                                    <p className="text-xl font-black text-emerald-700 uppercase">₦2.4M</p>
-                                    <p className="text-[9px] font-bold text-emerald-400 mt-1 uppercase">Total inventory value</p>
+                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total SKUs</p>
+                                    <p className="text-xl font-black text-emerald-700 uppercase">{inventory.length}</p>
+                                    <p className="text-[9px] font-bold text-emerald-400 mt-1 uppercase">Active inventory items</p>
                                 </div>
                             </div>
                         </CardContent>

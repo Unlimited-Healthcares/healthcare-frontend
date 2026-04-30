@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ import {
     Fingerprint
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { auditService } from '@/services/auditService';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface AuditLog {
     id: string;
@@ -31,12 +33,31 @@ interface AuditLog {
 }
 
 export function AdminComplianceAudit() {
-    const [logs, setLogs] = useState<AuditLog[]>([
-        { id: '1', actor: 'Dr. Sarah Chen', action: 'Accessed Patient Records', target: '#8821 (John Doe)', status: 'AUTHORIZED', timestamp: '2026-04-30 02:15:22' },
-        { id: '2', actor: 'Unknown IP (192.168.1.4)', action: 'Failed Login Attempt', target: 'Mortuary DB', status: 'UNAUTHORIZED', timestamp: '2026-04-30 02:18:04' },
-        { id: '3', actor: 'Elena Rodriguez', action: 'Updated Rehab Plan', target: '#8821 (John Doe)', status: 'AUTHORIZED', timestamp: '2026-04-30 02:22:45' },
-        { id: '4', actor: 'Admin Michael', action: 'Revoked User Credentials', target: 'James Wilson', status: 'AUTHORIZED', timestamp: '2026-04-30 02:25:12' }
-    ]);
+    const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLogs = async () => {
+            try {
+                const response = await auditService.getAuditLogs();
+                const data = Array.isArray(response) ? response : (response.data || []);
+                const mappedLogs: AuditLog[] = data.map((l: any) => ({
+                    id: l.id,
+                    actor: l.userName || l.userId || 'System',
+                    action: l.action,
+                    target: l.entityType || 'Resource',
+                    status: l.action.includes('UNAUTHORIZED') ? 'UNAUTHORIZED' : 'AUTHORIZED',
+                    timestamp: new Date(l.createdAt).toLocaleString()
+                }));
+                setLogs(mappedLogs);
+            } catch (error) {
+                console.error('Failed to fetch audit logs:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLogs();
+    }, []);
 
     const handleGenerateReport = (standard: string) => {
         toast.success(`${standard} Report Generated`, {
@@ -101,7 +122,16 @@ export function AdminComplianceAudit() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="divide-y divide-slate-100">
-                                {logs.map((log) => (
+                                {loading ? (
+                                    <div className="p-12 flex justify-center">
+                                        <LoadingSpinner size="sm" />
+                                    </div>
+                                ) : logs.length === 0 ? (
+                                    <div className="p-12 text-center">
+                                        <History className="h-8 w-8 text-slate-200 mx-auto mb-3" />
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No audit logs found</p>
+                                    </div>
+                                ) : logs.map((log) => (
                                     <div key={log.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors group">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${log.status === 'AUTHORIZED' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600 animate-pulse'}`}>

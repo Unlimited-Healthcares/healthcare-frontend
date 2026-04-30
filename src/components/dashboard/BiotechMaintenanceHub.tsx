@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,25 +17,43 @@ import {
     Video
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface RepairTicket {
-    id: string;
-    equipment: string;
-    reporter: string;
-    issue: string;
-    priority: 'Critical' | 'High' | 'Routine';
-    status: 'pending' | 'in-progress' | 'completed';
-    timestamp: string;
-}
+import { biotechService, MaintenanceTicket } from '@/services/biotechService';
+import { useAuth } from '@/hooks/useAuth';
 
 export function BiotechMaintenanceHub() {
-    const [tickets, setTickets] = useState<RepairTicket[]>([
-        { id: 'T-204', equipment: 'Ventilator V500', reporter: 'Nurse Unit 1', issue: 'Life-support system alarm persistent', priority: 'Critical', status: 'pending', timestamp: '10 min ago' },
-        { id: 'T-205', equipment: 'Patient Monitor N22', reporter: 'Dr. Sarah Chen', issue: 'Monitor screen frozen', priority: 'High', status: 'in-progress', timestamp: '24 min ago' },
-        { id: 'T-206', equipment: 'Infusion Pump CC Plus', reporter: 'Pharmacist Unit 4', issue: 'Flow-rate calibration error', priority: 'Routine', status: 'pending', timestamp: '45 min ago' }
-    ]);
+    const { profile } = useAuth();
+    const [tickets, setTickets] = useState<MaintenanceTicket[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleAction = (id: string, action: string) => {
+    useEffect(() => {
+        const fetchTickets = async () => {
+            try {
+                setLoading(true);
+                const data = await biotechService.getTickets((profile as any)?.centerId);
+                setTickets(data);
+            } catch (error) {
+                console.error("Failed to fetch tickets:", error);
+                toast.error("Failed to load maintenance tickets");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTickets();
+    }, [profile]);
+
+    const handleAction = async (id: string, action: string) => {
+        if (action === 'Resolve Report') {
+            try {
+                await biotechService.resolveTicket(id, 'resolved');
+                setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'resolved' } : t));
+                toast.success("Ticket resolved successfully");
+            } catch (error) {
+                toast.error("Failed to resolve ticket");
+            }
+            return;
+        }
+        
         toast.info(`${action}: Ticket ${id}`, {
             description: "Synchronizing maintenance log across facility infrastructure."
         });
@@ -57,24 +75,24 @@ export function BiotechMaintenanceHub() {
 
             <div className="grid gap-4">
                 {tickets.map((ticket) => (
-                    <Card key={ticket.id} className={`border-none shadow-sm rounded-3xl overflow-hidden transition-all ${ticket.priority === 'Critical' ? 'bg-red-50/50 ring-1 ring-red-100' : 'bg-white'}`}>
+                    <Card key={ticket.id} className={`border-none shadow-sm rounded-3xl overflow-hidden transition-all ${ticket.priority === 'critical' ? 'bg-red-50/50 ring-1 ring-red-100' : 'bg-white'}`}>
                         <CardContent className="p-6">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${ticket.priority === 'Critical' ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${ticket.priority === 'critical' ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                         <AlertTriangle className="h-6 w-6" />
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{ticket.equipment}</p>
-                                            <Badge variant="outline" className={`text-[9px] font-black uppercase ${ticket.priority === 'Critical' ? 'text-red-600 border-red-200 bg-red-50' : 'text-slate-400 border-slate-200'}`}>
+                                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{ticket.equipment?.name || 'Unknown Device'}</p>
+                                            <Badge variant="outline" className={`text-[9px] font-black uppercase ${ticket.priority === 'critical' ? 'text-red-600 border-red-200 bg-red-50' : 'text-slate-400 border-slate-200'}`}>
                                                 {ticket.priority} Priority
                                             </Badge>
                                         </div>
-                                        <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">“{ticket.issue}”</p>
+                                        <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">“{ticket.issueDescription}”</p>
                                         <div className="flex items-center gap-2 pt-1">
                                             <User className="h-3 w-3 text-slate-400" />
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ticket.reporter} • {ticket.timestamp}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ticket: {ticket.ticketNumber} • {new Date(ticket.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -87,10 +105,11 @@ export function BiotechMaintenanceHub() {
                                         <MessageSquare className="h-5 w-5" />
                                     </Button>
                                     <Button 
-                                        onClick={() => handleAction(ticket.id, 'Starting Diagnostic')}
+                                        onClick={() => handleAction(ticket.id, 'Resolve Report')}
+                                        disabled={ticket.status === 'resolved'}
                                         className="rounded-xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest h-10 px-6"
                                     >
-                                        Resolve Report
+                                        {ticket.status === 'resolved' ? 'Resolved' : 'Resolve Report'}
                                     </Button>
                                 </div>
                             </div>

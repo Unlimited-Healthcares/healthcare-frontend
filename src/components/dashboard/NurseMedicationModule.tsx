@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,8 @@ import {
     AlertTriangle,
     Info,
     ChevronRight,
-    ArrowRight
+    ArrowRight,
+    Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -29,13 +30,14 @@ interface MedicationTask {
     status: 'pending' | 'given' | 'refused';
 }
 
-export function NurseMedicationModule() {
-    const [tasks, setTasks] = useState<MedicationTask[]>([
-        { id: 'm1', patientName: 'John Doe', drugName: 'Insulin (Aspart)', dose: '12 Units', time: '07:00', route: 'Subcutaneous', status: 'pending' },
-        { id: 'm2', patientName: 'Jane Smith', drugName: 'Warfarin', dose: '5mg', time: '09:00', route: 'Oral', status: 'pending' },
-        { id: 'm3', patientName: 'Robert Brown', drugName: 'Ceftriaxone', dose: '1g', time: '10:00', route: 'IV', status: 'pending' }
-    ]);
+import { pharmacyService } from '@/services/pharmacyService';
+import { careTaskService } from '@/services/careTaskService';
+import { useAuth } from '@/hooks/useAuth';
 
+export function NurseMedicationModule() {
+    const { user } = useAuth();
+    const [tasks, setTasks] = useState<MedicationTask[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedTask, setSelectedTask] = useState<MedicationTask | null>(null);
     const [verification, setVerification] = useState({
         nameMatch: false,
@@ -44,7 +46,34 @@ export function NurseMedicationModule() {
         routeMatch: false
     });
 
-    const handleAdminister = (status: 'given' | 'refused') => {
+    const fetchMedications = async () => {
+        try {
+            setLoading(true);
+            const response = await pharmacyService.getPendingPrescriptions();
+            const data = Array.isArray(response) ? response : [];
+            
+            const mapped: MedicationTask[] = data.map((rx: any) => ({
+                id: rx.id,
+                patientName: rx.patient?.profile?.displayName || rx.patient?.name || 'Unknown Patient',
+                drugName: rx.medication || rx.drugName || 'N/A',
+                dose: rx.dosage || 'As directed',
+                time: rx.frequency || 'Scheduled',
+                route: rx.route || 'Oral',
+                status: rx.administrationStatus || 'pending'
+            }));
+            setTasks(mapped);
+        } catch (error) {
+            console.error('Failed to fetch medications:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMedications();
+    }, []);
+
+    const handleAdminister = async (status: 'given' | 'refused') => {
         if (status === 'given' && !Object.values(verification).every(v => v)) {
             toast.error("Safety Validation Required", {
                 description: "All 5 Rights (Patient, Drug, Dose, Route, Time) must be verified before administration."
@@ -52,18 +81,45 @@ export function NurseMedicationModule() {
             return;
         }
 
-        setTasks(prev => prev.map(t => t.id === selectedTask?.id ? { ...t, status } : t));
-        toast.success(status === 'given' ? "Medication Logged: GIVEN" : "Medication Logged: REFUSED", {
-            description: `Patient: ${selectedTask?.patientName} • Nurse ID: RN-2044 • ${new Date().toLocaleTimeString()}`
-        });
-        setSelectedTask(null);
-        setVerification({ nameMatch: false, doseMatch: false, timeMatch: false, routeMatch: false });
+        try {
+            // Log as a care task or update prescription status
+            await careTaskService.createCareTask({
+                patientId: (selectedTask as any).patientId, 
+                title: `Medication Admin: ${selectedTask?.drugName}`,
+                description: `${status.toUpperCase()} - Dose: ${selectedTask?.dose}, Route: ${selectedTask?.route}`,
+                priority: 'medium',
+                type: 'medication',
+                metadata: { status }
+            } as any);
+
+            setTasks(prev => prev.map(t => t.id === selectedTask?.id ? { ...t, status } : t));
+            toast.success(status === 'given' ? "Medication Logged: GIVEN" : "Medication Logged: REFUSED", {
+                description: `Patient: ${selectedTask?.patientName} • Nurse ID: RN-2044 • ${new Date().toLocaleTimeString()}`
+            });
+            setSelectedTask(null);
+            setVerification({ nameMatch: false, doseMatch: false, timeMatch: false, routeMatch: false });
+            fetchMedications(); // Refresh queue
+        } catch (error) {
+            console.error("Failed to log medication administration:", error);
+            toast.error("Failed to log administration");
+        }
     };
 
     return (
         <div className="space-y-6">
             <div className="grid gap-4">
-                {tasks.map((task) => (
+                {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center bg-slate-50 rounded-[40px] border border-dashed border-slate-200">
+                        <Loader2 className="h-10 w-10 text-teal-600 animate-spin mb-4" />
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Scanning Pharmacy Vault...</p>
+                    </div>
+                ) : tasks.length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center bg-slate-50 rounded-[40px] border border-dashed border-slate-200">
+                        <Pill className="h-12 w-12 text-slate-300 mb-4" />
+                        <p className="text-lg font-black text-slate-400 uppercase tracking-tight">All Medications Administered</p>
+                        <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mt-1">Medication queue for this shift is clear.</p>
+                    </div>
+                ) : tasks.map((task) => (
                     <Card key={task.id} className={`border-none shadow-sm rounded-3xl overflow-hidden ${task.status === 'given' ? 'bg-emerald-50/50' : task.status === 'refused' ? 'bg-red-50/50' : 'bg-white'}`}>
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">

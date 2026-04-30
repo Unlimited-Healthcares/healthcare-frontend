@@ -341,18 +341,18 @@ export function DoctorDashboard() {
                 <div className="md:col-span-8 space-y-6">
                     <DashboardTasks />
                     <Card className="border-none shadow-sm rounded-[32px] overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
-                                    <Activity className="h-5 w-5" />
+                        <CardHeader className="p-4 sm:p-6 bg-slate-50/50 border-b border-slate-100 space-y-0">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
+                                    <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
-                                    <CardTitle className="text-sm font-black uppercase tracking-tight text-slate-900">Clinical Event Timeline</CardTitle>
-                                    <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Patient Journey</CardDescription>
+                                    <CardTitle className="text-[10px] sm:text-sm font-black uppercase tracking-tight text-slate-900">Clinical Event Timeline</CardTitle>
+                                    <CardDescription className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Patient Journey</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-6">
                             <ClinicalTimeline />
                         </CardContent>
                     </Card>
@@ -462,7 +462,13 @@ export function DoctorDashboard() {
                 </TabsContent>
 
                 <TabsContent value="discharge">
-                    <DischargePlanner patient={{ name: 'John Doe' }} role="doctor" />
+                    {selectedPatientId ? (
+                        <DischargePlanner patientId={selectedPatientId} role="doctor" />
+                    ) : (
+                        <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a patient to plan discharge</p>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="recovery">
@@ -470,7 +476,13 @@ export function DoctorDashboard() {
                 </TabsContent>
 
                 <TabsContent value="eol">
-                    <EndOfLifeConfirmation patient={{ id: '8821', name: 'John Doe' }} currentDoctor={user} />
+                    {selectedPatientId ? (
+                        <EndOfLifeConfirmation patientId={selectedPatientId} currentDoctor={user} />
+                    ) : (
+                        <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a patient for EOL Protocol</p>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="imaging">

@@ -19,6 +19,9 @@ import {
     Save
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { mortuaryService, MortuaryStatus } from '@/services/mortuaryService';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface MortuaryIntake {
     id: string;
@@ -33,38 +36,81 @@ interface MortuaryIntake {
 }
 
 export function MortuaryIntakeManager({ remain }: { remain: any }) {
-    const [intake, setIntake] = useState<MortuaryIntake>({
+    const { profile } = useAuth();
+    const [isSaving, setIsSaving] = useState(false);
+    const [intake, setIntake] = useState<any>({
         id: remain.id,
-        patientName: remain.name,
-        location: remain.location || 'Room 304',
-        transportTeam: 'Hospital Logistics Team A',
-        coldStorageUnit: 'Unit B-12',
-        temperature: 3.8,
-        coronerCase: false,
-        status: 'AWAITING'
+        deceasedName: remain.name || remain.patientName,
+        location: remain.location || 'Ward/Room Not Specified',
+        unit: 'Unit B-12',
+        status: remain.status || 'AWAITING',
+        notes: '',
+        centerId: (profile as any)?.centerId || remain.centerId
     });
 
-    const handleLogCollection = () => {
-        setIntake(prev => ({ 
-            ...prev, 
-            status: 'COLLECTED', 
-            collectionTime: new Date().toISOString().replace('T', ' ').substring(0, 16) 
-        }));
-        toast.success("Collection Logged", {
-            description: "Remains transferred to transport team. Chain of custody updated."
-        });
+    const [extra, setExtra] = useState({
+        transportTeam: 'Hospital Logistics Team A',
+        temperature: 3.8,
+        coronerCase: false,
+    });
+
+    const handleLogCollection = async () => {
+        try {
+            setIsSaving(true);
+            const data = {
+                deceasedName: intake.deceasedName,
+                unit: intake.unit,
+                status: 'COLLECTED' as any,
+                notes: `Collection Logged. Team: ${extra.transportTeam}. Location: ${intake.location}`,
+                centerId: intake.centerId
+            };
+            
+            if (intake.id && !intake.id.startsWith('MOCK')) {
+                await mortuaryService.updateRecord(intake.id, data);
+            } else {
+                const newRecord = await mortuaryService.createRecord(data);
+                setIntake(prev => ({ ...prev, id: newRecord.id }));
+            }
+
+            setIntake(prev => ({ 
+                ...prev, 
+                status: 'COLLECTED', 
+                collectionTime: new Date().toISOString().replace('T', ' ').substring(0, 16) 
+            }));
+            toast.success("Collection Logged", {
+                description: "Remains transferred to transport team. Chain of custody updated."
+            });
+        } catch (error) {
+            console.error("Failed to log collection:", error);
+            toast.error("Failed to update mortuary registry");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleFinalizeStorage = () => {
-        setIntake(prev => ({ ...prev, status: 'STORED' }));
-        toast.success("Storage Finalized", {
-            description: `Remains secured in ${intake.coldStorageUnit} at ${intake.temperature}°C.`
-        });
+    const handleFinalizeStorage = async () => {
+        try {
+            setIsSaving(true);
+            await mortuaryService.updateRecord(intake.id, {
+                status: 'STORED' as any,
+                notes: `${intake.notes || ''}\nStored in ${intake.unit} at ${extra.temperature}°C. Coroner Case: ${extra.coronerCase}`
+            });
+            
+            setIntake(prev => ({ ...prev, status: 'STORED' }));
+            toast.success("Storage Finalized", {
+                description: `Remains secured in ${intake.unit} at ${extra.temperature}°C.`
+            });
+        } catch (error) {
+            console.error("Failed to finalize storage:", error);
+            toast.error("Failed to secure registry record");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const toggleCoroner = () => {
-        const newState = !intake.coronerCase;
-        setIntake(prev => ({ ...prev, coronerCase: newState }));
+        const newState = !extra.coronerCase;
+        setExtra(prev => ({ ...prev, coronerCase: newState }));
         if (newState) {
             toast.warning("LEGAL HOLD PLACED", {
                 description: "Coroner case flagged. Legal and Admin teams notified. Release blocked."
@@ -114,8 +160,8 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Transport Team / Personnel</Label>
                             <Input 
                                 className="h-14 rounded-2xl border-slate-100 bg-slate-50 font-bold" 
-                                value={intake.transportTeam}
-                                onChange={e => setIntake({...intake, transportTeam: e.target.value})}
+                                value={extra.transportTeam}
+                                onChange={e => setExtra({...extra, transportTeam: e.target.value})}
                                 disabled={intake.status === 'STORED'}
                             />
                         </div>
@@ -123,9 +169,11 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                         {intake.status === 'AWAITING' && (
                             <Button 
                                 onClick={handleLogCollection}
+                                disabled={isSaving}
                                 className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest gap-3 shadow-xl shadow-indigo-100"
                             >
-                                <Truck className="h-5 w-5" /> Log Collection from Ward
+                                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Truck className="h-5 w-5" />}
+                                {isSaving ? 'Logging...' : 'Log Collection from Ward'}
                             </Button>
                         )}
                     </CardContent>
@@ -144,8 +192,8 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned Unit</Label>
                                 <Input 
                                     className="h-14 rounded-2xl border-slate-100 bg-slate-50 font-bold" 
-                                    value={intake.coldStorageUnit}
-                                    onChange={e => setIntake({...intake, coldStorageUnit: e.target.value})}
+                                    value={intake.unit}
+                                    onChange={e => setIntake({...intake, unit: e.target.value})}
                                     disabled={intake.status === 'STORED'}
                                 />
                             </div>
@@ -156,8 +204,8 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                                         className="h-14 rounded-2xl border-slate-100 bg-slate-50 font-bold pl-12" 
                                         type="number"
                                         step="0.1"
-                                        value={intake.temperature}
-                                        onChange={e => setIntake({...intake, temperature: parseFloat(e.target.value)})}
+                                        value={extra.temperature}
+                                        onChange={e => setExtra({...extra, temperature: parseFloat(e.target.value)})}
                                     />
                                     <Thermometer className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                 </div>
@@ -167,8 +215,8 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                         <div className="p-6 rounded-[2rem] bg-slate-900 text-white space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${intake.coronerCase ? 'bg-amber-500' : 'bg-white/10'}`}>
-                                        <Gavel className={`h-5 w-5 ${intake.coronerCase ? 'text-slate-900' : 'text-white'}`} />
+                                    <div className={`p-2 rounded-lg ${extra.coronerCase ? 'bg-amber-500' : 'bg-white/10'}`}>
+                                        <Gavel className={`h-5 w-5 ${extra.coronerCase ? 'text-slate-900' : 'text-white'}`} />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-widest">Coroner Case / Legal Hold</p>
@@ -178,9 +226,9 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                                 <Button 
                                     onClick={toggleCoroner}
                                     variant="ghost" 
-                                    className={`rounded-xl h-10 px-6 font-black uppercase text-[10px] tracking-widest border ${intake.coronerCase ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                    className={`rounded-xl h-10 px-6 font-black uppercase text-[10px] tracking-widest border ${extra.coronerCase ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
                                 >
-                                    {intake.coronerCase ? 'HOLD ACTIVE' : 'FLAG CASE'}
+                                    {extra.coronerCase ? 'HOLD ACTIVE' : 'FLAG CASE'}
                                 </Button>
                             </div>
                         </div>
@@ -188,9 +236,11 @@ export function MortuaryIntakeManager({ remain }: { remain: any }) {
                         {intake.status === 'COLLECTED' && (
                             <Button 
                                 onClick={handleFinalizeStorage}
+                                disabled={isSaving}
                                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest gap-3 shadow-xl shadow-emerald-100"
                             >
-                                <Save className="h-5 w-5" /> Finalize Storage & Secure
+                                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                                {isSaving ? 'Securing...' : 'Finalize Storage & Secure'}
                             </Button>
                         )}
                     </CardContent>

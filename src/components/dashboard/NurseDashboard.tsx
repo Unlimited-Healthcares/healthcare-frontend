@@ -55,7 +55,8 @@ import { DischargePlanner } from './DischargePlanner';
 export const NurseDashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('vitals');
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
     const [patients, setPatients] = useState<PatientRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false);
@@ -124,18 +125,7 @@ export const NurseDashboard = () => {
                 return {
                     ...p,
                     status: (patientVitals ? 'active' : 'scheduled') as any,
-                    vitals: {
-                        heartRate: vitalsData.heartRate || 72, // Fallback to mock for demo if data missing
-                        bp: vitalsData.bloodPressure || "120/80",
-                        temp: vitalsData.temperature || 36.6,
-                        spO2: vitalsData.oxygenSaturation || 98,
-                        lastUpdated: patientVitals?.createdAt ? new Date(patientVitals.createdAt).toLocaleTimeString() : 'No data'
-                    },
-                    tasks: patientTasks.length > 0 ? patientTasks : [
-                        { id: `t1-${p.id}`, title: "Administer insulin (Aspart)", time: "07:00 AM", status: "pending" as const },
-                        { id: `t2-${p.id}`, title: "Assist Intubation (Bed 4)", time: "10:30 AM", status: "pending" as const },
-                        { id: `t3-${p.id}`, title: "Wound dressing (Sacral)", time: "14:00 PM", status: "pending" as const }
-                    ]
+                    tasks: patientTasks
                 };
             });
 
@@ -371,11 +361,14 @@ export const NurseDashboard = () => {
                                 patients.map((p) => (
                                     <Card key={p.id} className="border-none shadow-sm rounded-xl overflow-hidden ring-1 ring-gray-100">
                                         <div className={cn("h-1", p.vitals && (p.vitals.heartRate! > 100 || p.vitals.spO2! < 95) ? "bg-rose-500" : "bg-teal-500")} />
-                                        <CardContent className="p-4">
+                                        <CardContent className="p-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedPatientId(p.id)}>
                                             <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <div className="font-bold text-sm text-gray-900">{p.fullName || p.patientId}</div>
-                                                    <div className="text-[10px] text-gray-400">Last updated: {p.vitals?.lastUpdated}</div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("w-2 h-2 rounded-full", selectedPatientId === p.id ? "bg-indigo-600 animate-pulse" : "bg-transparent")} />
+                                                    <div>
+                                                        <div className={cn("font-bold text-sm", selectedPatientId === p.id ? "text-indigo-600" : "text-gray-900")}>{p.fullName || p.patientId}</div>
+                                                        <div className="text-[10px] text-gray-400">Last updated: {p.vitals?.lastUpdated || 'Recently'}</div>
+                                                    </div>
                                                 </div>
                                                 {p.vitals && (p.vitals.heartRate! > 100 || p.vitals.spO2! < 95) && (
                                                     <Badge variant="destructive" className="text-[10px] py-0 px-1.5 h-4">URGENT</Badge>
@@ -435,7 +428,16 @@ export const NurseDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="discharge">
-                    <DischargePlanner patient={{ name: 'John Doe' }} role="nurse" />
+                    {selectedPatientId ? (
+                        <DischargePlanner 
+                            patient={patients.find(p => p.id === selectedPatientId) || { name: 'Unknown' }} 
+                            onComplete={() => setActiveTab('vitals')}
+                        />
+                    ) : (
+                        <div className="p-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a patient from the roster to manage discharge</p>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="patients">
@@ -453,14 +455,14 @@ export const NurseDashboard = () => {
                                             <CardDescription className="text-teal-100 text-xs">CLINICAL TREATMENT PLAN & Schedule</CardDescription>
                                         </div>
                                         <Badge className="bg-white text-teal-600 border-none">
-                                            {p.tasks?.filter(t => t.status === 'pending').length} PENDING
+                                            {p.tasks?.filter(t => t.status === 'done').length || 0} / {p.tasks?.length || 0}
                                         </Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     <div className="divide-y divide-gray-100">
                                         {p.tasks && p.tasks.length > 0 ? (
-                                            p.tasks.map((task) => (
+                                            p.tasks.map((task: any) => (
                                                 <div key={task.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                                                     <div className="flex items-center gap-4">
                                                         <div className={cn(

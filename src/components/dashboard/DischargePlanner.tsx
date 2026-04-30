@@ -18,7 +18,8 @@ import {
     ShieldCheck,
     ArrowRight,
     ClipboardList,
-    Clock
+    Clock,
+    Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,8 @@ interface DischargePlan {
     redFlags: string[];
     nurseVerification: { counselled: boolean; medUnderstanding: boolean; completed: boolean };
 }
+
+import { clinicalService } from '@/services/clinicalService';
 
 export function DischargePlanner({ patient, role }: { patient: any, role: string }) {
     const [plan, setPlan] = useState<DischargePlan>({
@@ -45,10 +48,24 @@ export function DischargePlanner({ patient, role }: { patient: any, role: string
         nurseVerification: { counselled: false, medUnderstanding: false, completed: false }
     });
 
-    const handleSave = () => {
-        toast.success("Discharge Plan Finalized", {
-            description: "Distributed to Pharmacy, Nursing, and Patient Portal."
-        });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        try {
+            setIsSaving(true);
+            await clinicalService.saveDischargePlan({
+                patientId: patient.id,
+                ...plan
+            });
+            toast.success("Discharge Plan Finalized", {
+                description: "Distributed to Pharmacy, Nursing, and Patient Portal."
+            });
+        } catch (error) {
+            console.error("Failed to save discharge plan:", error);
+            toast.error("Failed to finalize discharge");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const toggleNurseTask = (task: keyof DischargePlan['nurseVerification']) => {
@@ -187,9 +204,11 @@ export function DischargePlanner({ patient, role }: { patient: any, role: string
                 <Button variant="outline" className="h-16 rounded-[2rem] px-10 border-2 font-black uppercase text-xs tracking-widest">Save Draft</Button>
                 <Button 
                     onClick={handleSave}
+                    disabled={isSaving}
                     className="h-16 bg-slate-900 hover:bg-slate-800 text-white rounded-[2rem] px-16 font-black uppercase text-xs tracking-widest shadow-xl shadow-slate-200 gap-3"
                 >
-                    <Save className="h-5 w-5" /> Finalize & Sync to Patient App
+                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                    {isSaving ? 'Finalizing...' : 'Finalize & Sync to Patient App'}
                 </Button>
             </div>
         </div>

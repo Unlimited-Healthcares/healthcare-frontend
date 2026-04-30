@@ -11,6 +11,7 @@ export const clinicalService = {
     // Prescriptions
     createPrescription: (data: unknown) => apiClient.post('/clinical/prescriptions', data),
     getPrescriptions: (params?: unknown) => apiClient.get('/clinical/prescriptions', { params }),
+    updatePrescription: (id: string, data: unknown) => apiClient.patch(`/clinical/prescriptions/${id}`, data),
     refillPrescription: (id: string) => apiClient.post(`/clinical/prescriptions/${id}/refill`),
 
     // Adherence
@@ -23,4 +24,7 @@ export const clinicalService = {
 
     // Work List (from care-tasks)
     getWorkList: (params?: unknown) => apiClient.get('/care-tasks', { params }),
+
+    // Discharge
+    saveDischargePlan: (data: unknown) => apiClient.post('/clinical/discharge', data),
 };

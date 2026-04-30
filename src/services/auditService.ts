@@ -12,5 +12,15 @@ export const auditService = {
     } catch (error) {
       console.error('❌ Failed to log clinical action:', error);
     }
+  },
+
+  getAuditLogs: async (params?: any) => {
+    try {
+      const response = await apiClient.get<any>('/analytics/audit-logs', { params });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to fetch audit logs:', error);
+      throw error;
+    }
   }
 };

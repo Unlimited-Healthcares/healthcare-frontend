@@ -44,15 +44,7 @@ import { IncomingWorkflowProposals } from './IncomingWorkflowProposals';
 import { DiagnosticResultModal } from '../clinical/DiagnosticResultModal';
 import { useAuth } from '@/hooks/useAuth';
 
-const activityData = [
-    { name: 'Mon', count: 45 },
-    { name: 'Tue', count: 52 },
-    { name: 'Wed', count: 48 },
-    { name: 'Thu', count: 61 },
-    { name: 'Fri', count: 55 },
-    { name: 'Sat', count: 32 },
-    { name: 'Sun', count: 28 },
-];
+const activityData: any[] = [];
 
 interface DiagnosticDashboardProps {
     centerId: string;
@@ -124,7 +116,7 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
         },
         {
             label: 'Active Technicians',
-            count: '1',
+            count: '0',
             sub: 'Staff on duty',
             icon: Users,
             color: 'text-emerald-600',
@@ -132,7 +124,7 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
         },
         {
             label: 'Avg Turnaround',
-            count: '4.2h',
+            count: '0h',
             sub: 'Optimal efficiency',
             icon: TrendingUp,
             color: 'text-amber-600',
@@ -215,36 +207,9 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {[
-                                        { name: 'Full Blood Count', patient: 'John Doe', time: '10 min ago', status: 'Ready' },
-                                        { name: 'Lipid Profile', patient: 'Jane Smith', time: '25 min ago', status: 'In Progress' },
-                                        { name: 'X-Ray Thorax', patient: 'Robert Brown', time: '1h ago', status: 'Ready' }
-                                    ].map((test, i) => (
-                                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                <Microscope className="h-5 w-5" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="font-bold text-gray-900 text-sm">{test.name}</div>
-                                                <div className="text-[10px] text-gray-500">{test.patient} • {test.time}</div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className={`text-[10px] px-2 py-1 rounded-full font-bold ${test.status === 'Ready' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                    {test.status}
-                                                </div>
-                                                {test.status === 'Ready' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl"
-                                                        onClick={() => handleRecordResult(test)}
-                                                    >
-                                                        <ExternalLink className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No recent results</p>
+                                    </div>
                                     <Button
                                         variant="outline"
                                         className="w-full mt-2 rounded-xl border-gray-200"
@@ -274,53 +239,11 @@ export function DiagnosticDashboard({ centerId, centerType = 'diagnostic' }: Dia
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {[
-                                    { id: 'ORD-1', patient: 'John Doe', type: 'Imaging', exam: 'Chest X-Ray', priority: 'Chest pain', status: 'Pending', time: '10 min ago' },
-                                    { id: 'ORD-2', patient: 'Jane Smith', type: 'Lab', exam: 'Lipid Profile', priority: 'Routine', status: 'Processing', time: '25 min ago' },
-                                    { id: 'ORD-3', patient: 'Robert Brown', type: 'Imaging', exam: 'CT Brain', priority: 'Stroke', status: 'Pending', time: '1h ago' },
-                                    { id: 'ORD-4', patient: 'Alice Johnson', type: 'Imaging', exam: 'US Abdomen', priority: 'Trauma', status: 'Pending', time: '2h ago' }
-                                ].map((order, i) => (
-                                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:shadow-sm transition-all">
-                                        <div className="flex items-start gap-4">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${order.type === 'Imaging' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                {order.type === 'Imaging' ? <ImageIcon className="h-5 w-5" /> : <Microscope className="h-5 w-5" />}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                                    {order.exam}
-                                                    {order.priority === 'Stroke' && <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Stroke Protocol</Badge>}
-                                                    {order.priority === 'Trauma' && <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Trauma</Badge>}
-                                                    {order.priority === 'Chest pain' && <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">Chest Pain</Badge>}
-                                                    {order.priority === 'Urgent' && <Badge className="bg-red-500 text-white hover:bg-red-600 border-none px-2 py-0 font-black text-[9px] uppercase tracking-wider">STAT / URGENT</Badge>}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                                                    <span>{order.patient}</span> • <span>{order.id}</span> • <span>{order.time}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className={`text-[10px] px-2 py-1 rounded-full font-bold ${order.status === 'Processing' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
-                                                {order.status}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 text-[9px] font-black uppercase rounded-lg border-slate-200"
-                                                    onClick={() => toast.success("Receipt Generated & Sent to Patient")}
-                                                >
-                                                    <Receipt className="h-3 w-3 mr-1" /> Receipt
-                                                </Button>
-                                                <Button
-                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
-                                                    onClick={() => order.type === 'Imaging' ? setViewingImagingMission(order) : setViewingLabMission(order)}
-                                                >
-                                                    {order.type === 'Imaging' ? 'Process & Acquire' : 'Process Sample'}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                <div className="py-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                                    <Clipboard className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No pending orders</p>
+                                    <p className="text-[10px] text-slate-300 mt-1">Diagnostic requests will appear here when issued by physicians.</p>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

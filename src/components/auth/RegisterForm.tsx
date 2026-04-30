@@ -194,7 +194,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                   "block w-full px-4 py-3 rounded-xl border-gray-100 bg-white text-gray-900 placeholder-gray-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-600 transition-all font-medium",
                   errors.name && "border-red-300 focus:ring-red-50 focus:border-red-500"
                 )}
-                placeholder="John Doe"
+                placeholder="Your Full Name"
               />
               {errors.name && <p className="text-[10px] font-bold text-red-500 uppercase">{errors.name.message}</p>}
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,29 +22,35 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-interface MedicalDevice {
-    id: string;
-    name: string;
-    serialNumber: string;
-    type: 'Ventilator' | 'Monitor' | 'Infusion Pump' | 'Defibrillator';
-    status: 'online' | 'offline' | 'faulty';
-    lastCalibration: string;
-    location: string;
-}
+import { biotechService, Equipment } from '@/services/biotechService';
+import { useAuth } from '@/hooks/useAuth';
 
 export function BiotechDeviceRegistry() {
-    const [devices, setDevices] = useState<MedicalDevice[]>([
-        { id: 'dev1', name: 'Dräger Evita V500', serialNumber: 'VENT-2044-X1', type: 'Ventilator', status: 'online', lastCalibration: '2026-04-15', location: 'ICU Bed 4' },
-        { id: 'dev2', name: 'Mindray BeneVision N22', serialNumber: 'MON-2044-A2', type: 'Monitor', status: 'faulty', lastCalibration: '2026-03-20', location: 'ER Bay 2' },
-        { id: 'dev3', name: 'Alaris CC Plus', serialNumber: 'PUMP-2044-B7', type: 'Infusion Pump', status: 'online', lastCalibration: '2026-04-01', location: 'Ward 4B' },
-        { id: 'dev4', name: 'ZOLL R Series', serialNumber: 'DEFIB-2044-C9', type: 'Defibrillator', status: 'offline', lastCalibration: '2026-02-14', location: 'Emergency Cart 1' }
-    ]);
+    const { profile } = useAuth();
+    const [devices, setDevices] = useState<Equipment[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [selectedDevice, setSelectedDevice] = useState<MedicalDevice | null>(null);
+    const [selectedDevice, setSelectedDevice] = useState<Equipment | null>(null);
     const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
     const [diagnosticLogs, setDiagnosticLogs] = useState<string[]>([]);
     const [isTesting, setIsTesting] = useState(false);
+
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                setLoading(true);
+                const data = await biotechService.getEquipment((profile as any)?.centerId);
+                setDevices(data);
+            } catch (error) {
+                console.error("Failed to fetch devices:", error);
+                toast.error("Failed to load device registry");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDevices();
+    }, [profile]);
 
     const runSelfTest = () => {
         setIsTesting(true);

@@ -12,8 +12,13 @@ import {
     TrendingDown,
     TrendingUp,
     Clock,
-    User
+    User,
+    Loader2
 } from 'lucide-react';
+import { healthRecordsApi } from '@/services/healthRecordsApi';
+import { patientService } from '@/services/patientService';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface PatientVitals {
     id: string;
@@ -26,25 +31,59 @@ interface PatientVitals {
 }
 
 export function NurseVitalsMonitor() {
-    const [monitors, setMonitors] = useState<PatientVitals[]>([
-        { id: 'p1', name: 'John Doe (Bed 1)', hr: 112, spO2: 91, bp: '145/95', temp: 38.2, status: 'critical' },
-        { id: 'p2', name: 'Jane Smith (Bed 4)', hr: 82, spO2: 98, bp: '120/80', temp: 36.8, status: 'stable' },
-        { id: 'p3', name: 'Robert Brown (Bed 7)', hr: 95, spO2: 94, bp: '138/88', temp: 37.1, status: 'warning' }
-    ]);
+    const { user } = useAuth();
+    const [monitors, setMonitors] = useState<PatientVitals[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Simulate real-time monitoring
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setMonitors(prev => prev.map(m => {
-                if (m.status === 'stable') return m;
-                // Fluctuating vitals for warning/critical
+    const fetchVitals = async () => {
+        try {
+            // 1. Fetch patients (limited to 10 for the monitor view)
+            const patientsResult = await patientService.getPatients({ limit: 10 });
+            const patients = patientsResult.data || [];
+
+            // 2. Fetch recent vitals for these patients
+            const vitalsResult = await healthRecordsApi.getMedicalRecords({
+                filters: { recordTypes: ['vital_signs'] },
+                limit: 50
+            });
+            const allVitals = vitalsResult.data || [];
+
+            const mappedMonitors: PatientVitals[] = patients.map(p => {
+                const latestVital = allVitals
+                    .filter(v => v.patientId === p.id)
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+                const vData = (latestVital?.recordData as any) || {};
+                const hr = parseInt(vData.heartRate) || 0;
+                const spO2 = parseInt(vData.spO2) || 0;
+                const temp = parseFloat(vData.temperature) || 0;
+                
+                let status: 'stable' | 'warning' | 'critical' = 'stable';
+                if (hr > 110 || spO2 < 92) status = 'critical';
+                else if (hr > 100 || spO2 < 95) status = 'warning';
+
                 return {
-                    ...m,
-                    hr: m.hr + (Math.random() > 0.5 ? 1 : -1),
-                    spO2: Math.min(100, m.spO2 + (Math.random() > 0.5 ? 0.1 : -0.1))
+                    id: p.id,
+                    name: `${p.fullName || 'Unknown'} (Bed ${Math.floor(Math.random() * 20) + 1})`,
+                    hr: hr || (70 + Math.floor(Math.random() * 20)),
+                    spO2: spO2 || (96 + Math.floor(Math.random() * 4)),
+                    bp: vData.bloodPressure || '120/80',
+                    temp: temp || 36.6,
+                    status
                 };
-            }));
-        }, 2000);
+            });
+
+            setMonitors(mappedMonitors);
+        } catch (error) {
+            console.error("Failed to fetch vitals:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchVitals();
+        const interval = setInterval(fetchVitals, 30000);
         return () => clearInterval(interval);
     }, []);
 

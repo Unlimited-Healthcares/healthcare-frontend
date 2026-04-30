@@ -37,43 +37,7 @@ interface SharedRecordsData {
   outgoing: SharedRecord[];
 }
 
-// Mock data - in real implementation, this would come from API
-const mockSharedRecords = {
-  incoming: [
-    {
-      id: '1',
-      patientName: 'John Doe',
-      fromCenterName: 'City Medical Center',
-      recordType: 'Blood Test Results',
-      sharedDate: '2024-01-20T10:00:00Z',
-      expiryDate: '2024-02-20T10:00:00Z',
-      accessLevel: 'read',
-      status: 'active'
-    },
-    {
-      id: '2',
-      patientName: 'Jane Smith',
-      fromCenterName: 'General Hospital',
-      recordType: 'MRI Scan',
-      sharedDate: '2024-01-18T14:30:00Z',
-      expiryDate: '2024-02-18T14:30:00Z',
-      accessLevel: 'download',
-      status: 'active'
-    }
-  ],
-  outgoing: [
-    {
-      id: '3',
-      patientName: 'Bob Johnson',
-      toCenterName: 'Specialist Clinic',
-      recordType: 'Lab Results',
-      sharedDate: '2024-01-19T09:15:00Z',
-      expiryDate: '2024-02-19T09:15:00Z',
-      accessLevel: 'read',
-      status: 'active'
-    }
-  ]
-};
+import medicalRecordService from '@/services/medicalRecordService';
 
 export function SharedMedicalRecordsViewer({ centerId }: SharedMedicalRecordsViewerProps) {
   const [activeTab, setActiveTab] = useState('incoming');
@@ -82,12 +46,39 @@ export function SharedMedicalRecordsViewer({ centerId }: SharedMedicalRecordsVie
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading data
-    setLoading(true);
-    setTimeout(() => {
-      setSharedRecords(mockSharedRecords);
-      setLoading(false);
-    }, 1000);
+    const fetchSharedRecords = async () => {
+      if (!centerId) return;
+      try {
+        setLoading(true);
+        const [incoming, outgoing] = await Promise.all([
+          medicalRecordService.getSharedMedicalRecords({ center_id: centerId, direction: 'incoming' }),
+          medicalRecordService.getSharedMedicalRecords({ center_id: centerId, direction: 'outgoing' })
+        ]);
+
+        const mapRecord = (r: any): SharedRecord => ({
+          id: r.id,
+          patientName: r.patient_name || 'N/A',
+          recordType: r.record_type || 'Clinical Document',
+          sharedDate: r.created_at || r.shared_date,
+          expiryDate: r.expiry_date,
+          accessLevel: r.access_level || 'read',
+          status: r.status || 'active',
+          fromCenterName: r.from_center_name,
+          toCenterName: r.to_center_name
+        });
+
+        setSharedRecords({
+          incoming: (incoming as any[]).map(mapRecord),
+          outgoing: (outgoing as any[]).map(mapRecord)
+        });
+      } catch (error) {
+        console.error('Failed to fetch shared records:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSharedRecords();
   }, [centerId]);
 
   const handleViewRecord = (recordId: string) => {

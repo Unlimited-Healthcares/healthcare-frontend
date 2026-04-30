@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,21 +31,55 @@ interface Prescription {
     doctor: string;
 }
 
-export function PharmacistVerificationHub() {
-    const [prescriptions, setPrescriptions] = useState<Prescription[]>([
-        { id: 'rx1', patientName: 'John Doe', drug: 'Warfarin 5mg', dosage: 'Daily', status: 'flagged', interaction: 'Patient recently prescribed NSAID by ER.', doctor: 'Dr. Smith' },
-        { id: 'rx2', patientName: 'Jane Smith', drug: 'Insulin Glargine', dosage: '20 Units HS', status: 'awaiting', interaction: null, doctor: 'Dr. Chen' },
-        { id: 'rx3', patientName: 'Robert Brown', drug: 'Amoxicillin 500mg', dosage: 'TID x7d', status: 'awaiting', interaction: null, doctor: 'Dr. Wilson' }
-    ]);
+import { pharmacyService } from '@/services/pharmacyService';
+import { useAuth } from '@/hooks/useAuth';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
+export function PharmacistVerificationHub() {
+    const { user } = useAuth();
+    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedRx, setSelectedRx] = useState<Prescription | null>(null);
 
-    const handleVerify = (id: string) => {
-        setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status: 'verified' } : p));
-        toast.success("Prescription Verified", {
-            description: "Safety checks passed. Patient notified for collection/delivery."
-        });
-        setSelectedRx(null);
+    const fetchPrescriptions = async () => {
+        try {
+            setLoading(true);
+            const response = await pharmacyService.getPendingPrescriptions();
+            const data = Array.isArray(response) ? response : [];
+            const mapped: Prescription[] = data.map((rx: any) => ({
+                id: rx.id,
+                patientName: rx.patient?.profile?.displayName || rx.patient?.name || 'Unknown Patient',
+                drug: rx.medication || rx.drugName || 'N/A',
+                dosage: rx.dosage || 'As directed',
+                status: rx.status || 'awaiting',
+                interaction: rx.metadata?.interactionNotes || null,
+                doctor: rx.practitioner?.profile?.displayName || rx.practitioner?.name || 'Clinical Staff'
+            }));
+            setPrescriptions(mapped);
+        } catch (error) {
+            console.error('Failed to fetch prescriptions:', error);
+            toast.error("Failed to load clinical queue");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPrescriptions();
+    }, []);
+
+    const handleVerify = async (id: string) => {
+        try {
+            await pharmacyService.verifyPrescription(id, { status: 'verified', notes: 'Verified by pharmacist via hub' });
+            toast.success("Prescription Verified", {
+                description: "Safety checks passed. Patient notified for collection/delivery."
+            });
+            setSelectedRx(null);
+            fetchPrescriptions();
+        } catch (error) {
+            console.error('Verification failed:', error);
+            toast.error("Failed to verify prescription");
+        }
     };
 
     const handleCallDoctor = () => {
@@ -75,7 +109,17 @@ export function PharmacistVerificationHub() {
             </div>
 
             <div className="grid gap-4">
-                {prescriptions.map((rx) => (
+                {loading ? (
+                    <div className="py-20 flex justify-center">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                ) : prescriptions.length === 0 ? (
+                    <div className="py-16 text-center bg-slate-50 rounded-[40px] border border-dashed border-slate-200">
+                        <Pill className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-lg font-black text-slate-400 uppercase tracking-tight">No pending prescriptions</p>
+                        <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mt-1">Pharmacy queue is currently clear.</p>
+                    </div>
+                ) : prescriptions.map((rx) => (
                     <Card key={rx.id} className={`border-none shadow-sm rounded-3xl overflow-hidden transition-all ${rx.status === 'verified' ? 'bg-emerald-50/50 opacity-60' : rx.status === 'flagged' ? 'bg-red-50/50 ring-1 ring-red-100' : 'bg-white'}`}>
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">

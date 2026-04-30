@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { medicalReportsService } from '@/services/medicalReportsService';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface LabMissionDashboardProps {
     order: any;
@@ -33,7 +36,9 @@ interface LabMissionDashboardProps {
 }
 
 export function LabMissionDashboard({ order, onBack, onComplete }: LabMissionDashboardProps) {
+    const { profile } = useAuth();
     const [labStatus, setLabStatus] = useState<'pending' | 'collected' | 'started' | 'processing' | 'completed'>('pending');
+    const [isSaving, setIsSaving] = useState(false);
     const [sampleLogs, setSampleLogs] = useState({
         timeDrawn: new Date().toISOString(),
         haemolysis: 'None',
@@ -60,16 +65,45 @@ export function LabMissionDashboard({ order, onBack, onComplete }: LabMissionDas
         setNewResult({ parameter: '', value: '', unit: '', isCritical: false });
     };
 
-    const handleFinalize = () => {
-        const hasCritical = results.some(r => r.isCritical);
-        toast.success("Lab mission completed. Results uploaded to Referring Doctor and Cardiologist.");
-        if (hasCritical) {
-            toast.info("CRITICAL ALERT: Notifying on-call consultant immediately.", {
-                icon: <ShieldAlert className="h-5 w-5 text-red-600" />,
-                duration: 5000
-            });
+    const handleFinalize = async () => {
+        try {
+            setIsSaving(true);
+            const hasCritical = results.some(r => r.isCritical);
+
+            // Create Formal Medical Report with lab findings
+            await medicalReportsService.createMedicalReport({
+                patientId: order.patientId || order.metadata?.patientId,
+                title: `Laboratory Report: ${order.exam}`,
+                diagnosis: results.map(r => `${r.parameter}: ${r.value} ${r.unit}${r.isCritical ? ' (CRITICAL)' : ''}`).join(', '),
+                notes: `Sample Integrity: Haemolysis ${sampleLogs.haemolysis}, Clotting ${sampleLogs.clotting}. Instrument: ${sampleLogs.instrument}.`,
+                recordType: 'lab_report',
+                category: 'laboratory',
+                centerId: (profile as any)?.centerId,
+                status: 'FINALIZED',
+                priority: hasCritical ? 'URGENT' : 'NORMAL',
+                metadata: {
+                    sampleLogs,
+                    results,
+                    originalOrderId: order.id,
+                    hasCriticalValues: hasCritical
+                }
+            } as any);
+
+            toast.success("Lab mission completed. Results archived and synced to Patient Record.");
+            
+            if (hasCritical) {
+                toast.info("CRITICAL ALERT: Notifying on-call consultant immediately.", {
+                    icon: <ShieldAlert className="h-5 w-5 text-red-600" />,
+                    duration: 5000
+                });
+            }
+            onComplete();
+        } catch (error) {
+            console.error("Failed to finalize lab mission:", error);
+            toast.error("Failed to submit laboratory findings");
+        } finally {
+            setIsSaving(false);
         }
-        onComplete();
     };
 
     return (
@@ -377,9 +411,11 @@ export function LabMissionDashboard({ order, onBack, onComplete }: LabMissionDas
                         {labStatus === 'completed' || results.length > 0 ? (
                             <Button 
                                 onClick={handleFinalize}
+                                disabled={isSaving}
                                 className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-blue-200 gap-3"
                             >
-                                <Send className="h-5 w-5" /> Finalize & Dispatch Results
+                                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                                {isSaving ? 'Dispatching Results...' : 'Finalize & Dispatch Results'}
                             </Button>
                         ) : (
                             <Button 
