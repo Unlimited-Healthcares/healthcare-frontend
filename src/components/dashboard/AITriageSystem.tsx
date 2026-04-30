@@ -35,6 +35,7 @@ interface TriageResult {
     recommendations: string[];
     urgencyLevel: string;
     aiNotes: string;
+    reliabilityIndex?: number;
 }
 
 export function AITriageSystem({ patient, currentVitals }: { patient: any, currentVitals?: Vitals }) {

@@ -19,6 +19,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import { webauthnService } from '@/services/webauthnService';
+import { toast } from 'sonner';
 
 interface EOLConfirmation {
     doctor1: { id: string; name: string; verified: boolean; timestamp?: string };

@@ -231,7 +231,7 @@ export const PhysioDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="rehab">
-                    <RehabPlanCreator />
+                    <RehabPlanCreator patientId={patients[0]?.id || 'default'} />
                 </TabsContent>
 
                 <TabsContent value="collaboration">

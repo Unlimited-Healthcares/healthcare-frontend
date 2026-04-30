@@ -162,7 +162,7 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
             images: (s.files || []).map(f => ({
               id: f.id,
               url: '',
-              thumbnail: '/placeholder-dicom.jpg',
+              thumbnail: '/placeholder-dicom.svg',
               patientName: s.patient?.name,
               patientId: s.patientId,
               studyDate: s.studyDate,
@@ -271,7 +271,7 @@ export const DicomViewer = ({ patientId: propPatientId }: { patientId?: string }
             images: Array(ser.instanceCount).fill(null).map((_, i) => ({
               id: `${ser.seriesInstanceUid}-f${i}`,
               url: '',
-              thumbnail: '/placeholder-dicom.jpg'
+              thumbnail: '/placeholder-dicom.svg'
             }))
           }));
           setStudies([...source]);

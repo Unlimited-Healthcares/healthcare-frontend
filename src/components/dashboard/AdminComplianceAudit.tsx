@@ -14,6 +14,7 @@ import {
     ChevronRight,
     Search,
     History,
+    Clock,
     CheckCircle2,
     XCircle,
     Fingerprint

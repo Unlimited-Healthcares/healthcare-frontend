@@ -34,7 +34,7 @@ export function PatientRehabTracker({ patientId }: { patientId: string }) {
                     setActivePlan(data[0]);
                     // Extract completed today from logs if any
                     const today = new Date().toISOString().split('T')[0];
-                    const done = data[0].completionLogs?.filter(l => l.date.startsWith(today) && l.completed).map(l => l.exerciseName) || [];
+                    const done = data[0].completionLogs?.filter((l: any) => l.date.startsWith(today) && l.completed).map((l: any) => l.exerciseName) || [];
                     setCompletedToday(done);
                 }
             } catch (error) {

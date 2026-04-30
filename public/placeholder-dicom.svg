@@ -1,0 +1,16 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#0A0A0A"/>
+  <path d="M50 50L350 350M350 50L50 350" stroke="#1F1F1F" stroke-width="1"/>
+  <circle cx="200" cy="200" r="150" stroke="#1F1F1F" stroke-width="1"/>
+  <rect x="180" y="50" width="40" height="300" rx="20" fill="#1F1F1F" opacity="0.3"/>
+  <rect x="50" y="180" width="300" height="40" rx="20" fill="#1F1F1F" opacity="0.3"/>
+  <text x="20" y="30" fill="#4ADE80" font-family="monospace" font-size="10">PATIENT: Placeholder, Jane (ID: PH1234567)</text>
+  <text x="20" y="45" fill="#4ADE80" font-family="monospace" font-size="10">DOB: 1980-05-15 | SEX: F</text>
+  <text x="380" y="30" fill="#4ADE80" font-family="monospace" font-size="10" text-anchor="end">SCAN DATE: 2023-10-26</text>
+  <text x="380" y="45" fill="#4ADE80" font-family="monospace" font-size="10" text-anchor="end">TIME: 14:32:01</text>
+  <text x="20" y="380" fill="#4ADE80" font-family="monospace" font-size="10">MR Brain | Slice: 18/36</text>
+  <text x="380" y="380" fill="#4ADE80" font-family="monospace" font-size="10" text-anchor="end">ACQ: 14:28:45 | Kvp: 3.0T</text>
+  <g opacity="0.5">
+    <path d="M190 200L210 200M200 190L200 210" stroke="#4ADE80" stroke-width="1"/>
+  </g>
+</svg>

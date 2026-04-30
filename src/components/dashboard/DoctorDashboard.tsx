@@ -466,7 +466,7 @@ export function DoctorDashboard() {
                 </TabsContent>
 
                 <TabsContent value="recovery">
-                    <PatientPostDischargeHub />
+                    <PatientPostDischargeHub patientId={selectedPatientId || 'default'} />
                 </TabsContent>
 
                 <TabsContent value="eol">

@@ -380,9 +380,6 @@ export function QuickActions({ user, clinicalRequests = [], onAction, hasMedical
             case 'Find Facilities':
                 navigate('/centers');
                 return;
-            case 'Call a Practitioner':
-                navigate('/discovery?type=doctor');
-                return;
             case 'Search for Service':
             case 'Book Appointment':
             case 'Request Appointment':

@@ -161,7 +161,7 @@ export function TelehealthSession({ conferenceId, onClose }: { conferenceId: str
                         {/* Screen Share Tile (if sharing) */}
                         {isSharing && (
                             <div className="relative rounded-[2.5rem] bg-indigo-900/20 border-2 border-indigo-500/30 overflow-hidden col-span-1 row-span-1 shadow-2xl">
-                                <div className="absolute inset-0 bg-[url('/placeholder-dicom.jpg')] bg-cover bg-center opacity-40" />
+                                <div className="absolute inset-0 bg-[url('/placeholder-dicom.svg')] bg-cover bg-center opacity-40" />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="text-center">
                                         <Monitor className="h-12 w-12 text-indigo-400 mx-auto mb-4" />

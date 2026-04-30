@@ -144,7 +144,7 @@ export function PatientDashboard() {
                 </TabsContent>
 
                 <TabsContent value="recovery" className="animate-in fade-in slide-in-from-right-4 duration-500">
-                    <PatientPostDischargeHub />
+                    <PatientPostDischargeHub patientId={user?.id || 'default'} />
                 </TabsContent>
 
                 <TabsContent value="eol_docs">

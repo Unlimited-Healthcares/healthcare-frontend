@@ -14,6 +14,7 @@ export interface RehabPlan {
   physioId: string;
   title: string;
   exercises: RehabExercise[];
+  completionLogs?: any[];
   status: string;
   createdAt: string;
 }
